@@ -1,72 +1,69 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-<title>ds8086</title>
-<style>
-    a:link {
-        color:rgb(4, 174, 4);
-        background-color:  transparent;
-        text-decoration: none;
-    }
-    a:visited {
-        color:rgb(4, 174, 4);
-        background-color: transparent;
-        text-decoration: none;
-    }
-    a:hover {
-        color:rgb(120, 245, 120);
-        background-color: transparent;
-        text-decoration: none;
-    }
-    a:active {
-        color:rgb(4, 174, 4);
-        background-color: transparent;
-        text-decoration: none;
-    }
-    body {
-        background-color: black;
-        color:rgb(138, 243, 138); 
-        font-family:monospace;
-        font-size: 100%
-    }
-    h2 {
-        color:rgb(138, 243, 138); 
-        font-family:monospace;
-        font-size: 1.5em;
-    }
-    hr {
-        color: rgb(194, 194, 194);
-    }
-    p {
-        background-color: black;
-        color:rgb(138, 243, 138); 
-        font-family:monospace;
-        font-size: 140%;
-    }
-    nav {
-        font-family:monospace;
-        color: rgb(194, 194, 194);
-        font-size: 1.875em;
-    }
-</style>
+    <title>ds8086</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Uncomment line below for automatic light/dark mode based on device preference -->
+    <!-- <meta name="color-scheme" content="light dark"> -->
+
+    <style>
+        a:link, a:visited, a:active {
+            color:rgb(4, 174, 4);
+        }
+        a:hover {
+            color:rgb(120, 245, 120);
+        }
+        body {
+            background-color: black;
+            color:rgb(138, 243, 138);
+            font-family: monospace;
+        }
+        .container {
+            display:flexbox;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20vh;
+        }
+    </style>
 </head>
+
+<header>
+    <!-- The navigation menu -->
+    <nav style="font-size:18pt;">
+        <a href="/index.html" style="text-decoration: none;">home</a> |
+        <a href="/blog/blog.html" style="text-decoration: none;">blog</a> |
+        <a href="https://github.com/ds8086/" style="text-decoration: none;" target="_blank">code</a>
+        <a href="/exit.html" style="float: right; text-decoration: none;">exit</a>
+    </nav>
+</header>
+
+<hr style="color: rgb(138, 243, 138);">
+
 <body>
-
-<nav>
-    <a href="/index.html">home</a> | 
-    <a href="/blog/blog.html">blog</a> |
-    <a href="https://github.com/ds8086/" target="_blank">code</a> 
-    <a style="float:right" href="/exit.html">exit</a>
-</nav>
-<hr>
-
-<h2>Call trans opt: received. 2-19-98 13:24:18 REC:Log>.</h2>
-<p>
-    <b>2025.05.02 > </b> <a href="/blog/20250502.html">knock knock Neo</a>
-</p>
-<p>
-    <a href="/blog/blog.html">more...</a>
-</p>
-
+<div class="container">
+    <table style="width: 100%;">
+        <tr>
+            <th>
+                <img src="/assets/images/avatar.jpg" alt="avatar" width="200" height="200" style="border-radius: 50%;">
+            </th>            
+        </tr>
+        <tr>
+            <td style="text-align: center;">
+                <h1>Devin Stafford</h1>
+                <h2>Systems & Security</h2>
+                <h2>Engineer</h2>
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: center;">
+                <a href="https://www.linkedin.com/in/ds8086/"><img src="/assets/images/linkedin.png" width="40" height="34" style="padding-right: 1%;"></a>
+                <a href="https://github.com/ds8086/"><img src="/assets/images/github.png" width="34" height="34" style="padding-right: 1%;"></a>
+                <a href="https://www.credly.com/users/ds8086/"><img src="/assets/images/credly.png" width="68" height="34"></a>
+            </td>
+        </tr>
+    </table>
+</div>
 </body>
 </html>
