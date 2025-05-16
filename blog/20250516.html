@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Uncomment line below for automatic light/dark mode based on device preference -->
+    <!-- <meta name="color-scheme" content="light dark"> -->
+
+    <style>
+        .container {
+            display:flexbox;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20vh;
+        }
+        a:link, a:visited, a:active {
+            color:rgb(4, 174, 4);
+        }
+        a:hover {
+            color:rgb(120, 245, 120);
+        }
+        b {
+            color: rgb(138, 243, 138);
+        }
+        body {
+            background-color: black;
+            color: rgb(200, 200, 200);
+            font-family: monospace;
+            font-size: 12pt
+        }
+        code {
+            color: rgb(138, 243, 138);
+            display: block;
+            overflow-x: scroll;
+        }
+        h1, h2, h3, h4 {
+            color:rgb(4, 174, 4);
+        }
+        nav {
+            font-size: 16pt;
+        }
+        pre {
+            color: rgb(138, 243, 138);
+        }
+    </style>
+</head>
+
+<header>
+    <!-- The navigation menu -->
+    <nav style="font-size:18pt;">
+        <a href="/index.html" style="text-decoration: none;">home</a> |
+        <a href="/blog/blog.html" style="text-decoration: none;">blog</a> |
+        <a href="https://github.com/ds8086/" style="text-decoration: none;" target="_blank">code</a>
+        <a href="/exit.html" style="float: right; text-decoration: none;">exit</a>
+    </nav>
+</header>
+
+<hr>
+
+<section>
+    <h1>admin rights</h1>
+    <h2>(dis)organizational units</h2>
+    <p>
+        We have made it to the point where we can <i>all</i> agree that dedicated accounts should be used to administer servers and for that, I am grateful.
+        How admin rights are actually <i>assigned</i> is another matter entirely and it all starts with how Active Directory is (or is not) organized.
+        I have seen AD hierarchies where 1,000+ servers all reside in three OUs and on the opposite end of the spectrum, more OUs than servers to actually <i>use</i> them.
+        This probably made sense when you had 12 servers total...
+    </p>
+    <pre>
+ad.lab.local
+  |
+  |-- servers
+        |
+        |-- tier 1 apps
+        |-- tier 2 apps
+        |-- tier 3 apps
+    </pre>
+    <p>...and now you've just lost your mind.</p>
+    <pre>
+ad.lab.local
+  |
+  |-- servers
+        |
+        |-- api
+        |-- delinea
+        |-- duo
+        |-- ftp
+        |-- maria db
+        |-- microservices
+        |-- microsoft sql
+        |-- middle tier
+        |-- mobile app
+        |-- mongo db
+        |-- netwrix
+        ...
+        |-- website
+        |-- zombocom
+    </pre>
+    <p>
+        <i>"So what is the 'right' way to structure an OU for servers?"</i> I'm glad you asked. In the example below the db, sec, and web OUs correspond to the <u>teams</u>
+        which administer the servers within. In every large Active Directory environment I have seen, regardless of the number of applications or different classes of servers,
+        it usually comes down to a dozen or so unique business units who have any business with admin rights on servers. I have implemented structure in real-world
+        Active Directory, it makes the assignment and auditing of admin rights effortless, exactly as it should be.
+    </p>
+    <pre>
+ad.lab.local
+  |
+  |-- servers
+        |
+        |
+        |-- db
+        |   |
+        |   |-- maria db
+        |   |-- microsoft sql
+        |   |-- mongo db
+        |
+        |-- sec
+        |   |
+        |   |-- delinea
+        |   |-- duo
+        |
+        |-- web
+            |
+            |-- api
+            |-- ftp
+            |-- middle tier
+            |-- microservices
+            |-- mobile app
+            |-- website
+            |-- zombocom
+    </pre>
+</section>
+
+<section>
+    <h2>group policy</h2>
+    <p>
+        The GPO savvy will already know the next steps; using the previous example you would create three GPOs named something like, <b>Local Admins - db</b>,
+        <b>Local Admins - sec</b>, and <b>Local Admins - web</b>. Each GPO has the Administrators group defined with a single group corresponding to the admin accounts for that
+        business unit, and is then attached to the corresponding OU. <i>"But what about the Systems Administrators? They need admin rights on everything!"</i> Okay...
+        so create another GPO named <b>Local Admins - all</b>, define the members of the Administrators group, and attach that to the top-most servers OU. Done.
+    </p>
+    <h2>a group for every server</h2>
+    <p>
+        <i>"I actually have a clever way to assign admin groups to every server using a single GPO."</i><br><br>
+        I'll bet you do. I know exactly what you're going to say; you'll create a group for <u>each</u> server in the environment, then you'll create a GPO which defines the 
+        Administrator group using variables, something like <b>%DOMAINNAME%\Admins-%COMPUTERNAME%</b>. That will absolutely work, and yes, it makes auditing admin rights on
+        servers a simple matter of querying AD group membership. There are several things you should consider before implementing this method.
+    </p>
+    <ul>
+        <li>
+            If you have 90 servers in the same 'class', why would a user need admin rights on only a subset of them?
+        </li>
+        <li>
+            What happens when your junior admin provisions a new server and forgets to create and populate the group?
+        </li>
+        <li>
+            You realize there are only so many SIDs in Active Directory...right?
+        </li>
+        <li>
+            What happens when a user is a member of 1,000+ groups?
+        </li>
+    </ul>
+    <p>
+        Run the PowerShell script below <u>in your lab environment</u>, then try logging into any domain machine with username <b>neo</b> and password <b>Thematrixhasyou69!</b>
+    </p>
+    <pre>
+        <code>
+$d = Get-ADDomain
+
+New-ADOrganizationalUnit `
+    -Name 'followthewhiterabbit' `
+    -Path ($d).DistinguishedName `
+    -Server $d.PDCEmulator
+
+$o = "OU=followthewhiterabbit,$((Get-ADDomain).DistinguishedName)"
+
+New-ADUser `
+    -Name neo `
+    -AccountPassword (ConvertTo-SecureString 'Thematrixhasyou69!' `
+    -AsPlainText -Force) `
+    -Enabled:$true `
+    -Path $ou `
+    -Server $d.PDCEmulator
+
+$i = 0
+1..1500 | % {
+    $i++
+    Write-Progress "taking the red pill" -PercentComplete ($i / 1500 * 100)
+
+    New-ADGroup `
+        -Name "matrixusers$($_)" `
+        -GroupCategory Security `
+        -GroupScope Global `
+        -Server $d.PDCEmulator `
+        -Path $o
+    
+    Add-ADGroupMember `
+        -Identity "matrixusers$($_)" `
+        -Members neo
+}
+        </code>
+    </pre>
+    <p>
+        You got the error below, didn't you?
+    </p>
+    <pre>
+        <code>
+┌────────────────────────────────────────────────────┐
+│ Remote Desktop Connection                          │
+├────────────────────────────────────────────────────┤
+│                                                    │
+│ An authentication error has occurred.              │
+│ During a logon attempt, the user's                 │
+│ security context accumulated too many security IDs │
+│                                                    │
+│                                                    │
+│ Remote computer: $hostname                         │
+│                                                    │
+├────────────────────────────────────────────────────┤
+│ ▼  See details                                 OK  │
+└────────────────────────────────────────────────────┘
+        </code>
+    </pre>
+    <p>
+        I hope Microsoft never "fixes" this.
+    </p>
+</section>
