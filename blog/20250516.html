@@ -8,44 +8,10 @@
     <!-- Uncomment line below for automatic light/dark mode based on device preference -->
     <!-- <meta name="color-scheme" content="light dark"> -->
 
-    <style>
-        .container {
-            display:flexbox;
-            justify-content: center;
-            align-items: center;
-            padding-top: 20vh;
-        }
-        a:link, a:visited, a:active {
-            color:rgb(4, 174, 4);
-        }
-        a:hover {
-            color:rgb(120, 245, 120);
-        }
-        b {
-            color: rgb(138, 243, 138);
-        }
-        body {
-            background-color: black;
-            color: rgb(200, 200, 200);
-            font-family: monospace;
-            font-size: 12pt
-        }
-        code {
-            color: rgb(138, 243, 138);
-            display: block;
-            overflow-x: scroll;
-        }
-        h1, h2, h3, h4 {
-            color:rgb(4, 174, 4);
-        }
-        nav {
-            font-size: 16pt;
-        }
-        pre {
-            color: rgb(138, 243, 138);
-        }
-    </style>
+    <link rel="stylesheet" href="/assets/css/blog.css">
 </head>
+
+<body>
 
 <header>
     <!-- The navigation menu -->
@@ -101,7 +67,7 @@ ad.lab.local
     <p>
         <i>"So what is the 'right' way to structure an OU for servers?"</i> I'm glad you asked. In the example below the db, sec, and web OUs correspond to the <u>teams</u>
         which administer the servers within. In every large Active Directory environment I have seen, regardless of the number of applications or different classes of servers,
-        it usually comes down to a dozen or so unique business units who have any business with admin rights on servers. I have implemented structure in real-world
+        it usually comes down to a dozen or so unique business units who have any business with admin rights on servers. I have implemented this structure in real-world
         Active Directory, it makes the assignment and auditing of admin rights effortless, exactly as it should be.
     </p>
     <pre>
@@ -227,3 +193,6 @@ $i = 0
         I hope Microsoft never "fixes" this.
     </p>
 </section>
+
+</body>
+</html>
