@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Uncomment line below for automatic light/dark mode based on device preference -->
+    <!-- <meta name="color-scheme" content="light dark"> -->
+
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<header>
+    <!-- The navigation menu -->
+    <nav>
+        <a href="/index.html" style="text-decoration: none;">home</a> |
+        <a href="/blog/blog.html" style="text-decoration: none;">blog</a> |
+        <a href="https://github.com/ds8086/" style="text-decoration: none;" target="_blank">code</a>
+        <a href="/exit.html" style="float: right; text-decoration: none;">exit</a>
+    </nav>
+</header>
+
+<hr>
+
+<section>
+    <h1>data governance</h1>
+    <p>
+        I had <a href="/blog/20250516.html">posted previously</a> on the topic of organizing AD in a way to make assigning admin rights on domain member servers easier. If you've
+        yet to read that post, you should, but in summary the OU hierarchy for servers starts by defining the teams which require admin rights <i>on</i> servers and uses those
+        team names as the "top-most" point of differentiation across all servers, as shown in the abbreviated example below.
+    </p>
+    <pre>
+ad.lab.local
+  |
+  |-- servers
+        |
+        |-- db
+        |   |
+        |   |-- maria db
+        |   |-- microsoft sql
+        |
+        |-- sec
+        |   |
+        |   |-- delinea
+        |   |-- duo
+        |
+        |-- web
+            |
+            |-- api
+            |-- microservices
+    </pre>
+    <p>
+        <i>This</i> post builds upon that one by introducing the concept of data governance into AD in the form of three new attributes. The attributes below will not only help
+        achieve and maintain organizing the OU structure for servers in AD, but will also ensure that the correct parties are involved in auditing requirements, and notified
+        of issues on servers which they maintain. Below are the AD attributes added for this effort and a short description of expected values.
+    </p>
+    <ul>
+        <li>
+            <b>DataOwner</b>: A department head, likely someone with <i>president</i> in their title.
+        </li>
+        <li>
+            <b>DataSteward</b>: The SME(s) for the app or data that lives on the server.
+        </li>
+        <li>
+            <b>DataCustodian</b>: The IT folks that manage hwardware, storage, and backups for the server.
+        </li>
+    </ul>
+</section>
+
+<section>
+    <h2>attribute creation</h2>
+    <p>
+        <div class="blink">WARNING</div>
+        If you are unfamiliar with the process of editing an AD schema, stop. Take the time to look up a comprehensive guide. At a high level, check the items below.
+    </p>
+    <ul>
+        <li>
+            Ensure you have a known good Active Directory backup.
+        </li>
+        <li>
+            Verify that the account you will be using for this task is a member of the <b>Schema Admins</b> group.
+        </li>
+        <li>
+            Make sure there are no issues with AD replication or trusts.
+        </li>
+        <li>
+            Be certain it is not <a href="https://isitreadonlyfriday.com/" target="_blank">Read-Only Friday</a>.
+        </li>
+    </ul>
+    <p>
+        Log into the domain controller which holds the schema master FSMO role and run the command below from an administrative command prompt to register the schema management dll.
+    </p>
+    <code>regsvr32 schmmgmt.dll</code>
+    <p>
+        Launch Microsoft management console (mmc).
+    </p>
+    <pre>
+        <code>
+ ┌──────────────────────────────────────────────────────────────┐ 
+ │  Run                                                         │ 
+ ├──────────────────────────────────────────────────────────────┤ 
+ │                                                              │ 
+ │ ┌───┐  Type the name of a program, folder, document, or      │ 
+ │ └───┘  Internet resource, and Windows will open it for you.  │ 
+ │                                                              │ 
+ │       ┌─────────────────────────────────────────────────────┐│ 
+ │ Open: │ mmc                                                 ││ 
+ │       └─────────────────────────────────────────────────────┘│ 
+ │                                                              │ 
+ ├──────────────────────────────────────────────────────────────┤ 
+ │                      ┌──────────┐ ┌──────────┐ ┌──────────┐  │ 
+ │                      │    OK    │ │  Cancel  │ │ Browse...│  │ 
+ │                      └──────────┘ └──────────┘ └──────────┘  │ 
+ └──────────────────────────────────────────────────────────────┘ 
+        </code>
+    </pre>
+    <p>
+        Strike <b>ctrl + m</b> on your keyboard, select <i>Active Directory Schema</i> from the list of available snap-ins. Click <b>Add ></b>, followed by <b>OK</b>.
+    </p>
+    <pre>
+        <code>
+┌─────────────────────────────────────────────────────────────────┐
+│ Add or Remove Snap-ins                                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│ Available snap-ins                                              │
+│ ┌──────────────────────────┐       ┌──────────────────────────┐ │
+│ │Active Directory Domains..│       │Console Root              │ │
+│ │Active Directory Schema   │       │                          │ │
+│ │Active Directory Sites ...│       │                          │ │
+│ │Active Directory Users....│┌─────┐│                          │ │
+│ │ActiveX Control           ││Add >││                          │ │
+│ │ADSI Edit                 │└─────┘│                          │ │
+│ │How are you gentlemen?    │       │                          │ │
+│ │Authorization Manager     │       │                          │ │
+│ │Certificates              │       │                          │ │
+│ │Component Services        │       │                          │ │
+│ │...                       │       │                          │ │
+│ └──────────────────────────┘       └──────────────────────────┘ │
+│                                           ┌────────┐ ┌────────┐ │
+│                                           │   OK   │ │ Cancel │ │
+│                                           └────────┘ └────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+        </code>
+    </pre>
+    <p>
+        Expand <i>Active Directory Schema</i>, right-click on <i>Attributes</i> and select <b>Create Attribute...</b>
+    </p>
+    <pre>
+        <code>
+┌────────────────────────────────────────────────────────────── 
+│ ┌─────────────────────────────┐┌────────────────────────────┐ 
+│ │Console Root                 ││Name              | Syntax  │ 
+│ │ ▼ Active Directory Schema   ││                            │ 
+│ │   ► Classes                 ││AccountExpires      Large...│ 
+│ │   ► Attributes              ││accountNameHistory  Unico...│ 
+│ │    ┌──────────────────────┐ ││aCSAggregateTok...  Large...│ 
+│ │    │ Create Attribute...  │ ││aCSAllocableRSV...  Large...│ 
+│ │    │  ─────────────────── │ ││aCSCacheTimeout...  Integ...│ 
+│ │    │ New                  │ ││aCSDirection        Integ...│ 
+│ │    │  ─────────────────── │ ││aCSDSBMDeadTime     Integ...│ 
+│ │    │ View                 │ ││aCSDSBMPriority     Integ...│ 
+│ │    │ New Window from Here │ ││aCSDSBMRefresh      Integ...│ 
+│ │    │  ─────────────────── │ ││aCSEnableACSSer...  Boole...│ 
+│ │    │ New Taskpad View...  │ ││aCSEnableRSVPAc...  Boole...│ 
+│ │    │  ─────────────────── │ ││aCSEnableRSVPMe...  Boole...│ 
+│ │    │ Refresh              │ ││aCSEventLogLevel    Integ...│ 
+│ │    │ Export List...       │ ││aCSIdentityName     Unico...│ 
+│ │    │  ─────────────────── │ ││aCSMaxAggregate...  Large...│ 
+│ │    │ Help                 │ ││aCSMaxDurationP...  Integ...│ 
+│ │    └──────────────────────┘ ││aCSMaximumSDUSi...  Large...│ 
+│ └─────────────────────────────┘└────────────────────────────┘ 
+        </code>
+    </pre>
+    <p>
+        Fill in the <i>Common Name</i> and <i>Unique X500 Object ID</i> (OID) fields. The <i>LDAP Display Name</i> will automatically generate. You can use
+        <a href="https://github.com/ds8086/PowerShell/blob/main/ActiveDirectory/New-X500ObjectId.ps1" target="_blank">this script</a> for generating X500 OIDs.
+        Fill in the description field as you see fit. For the Syntax, select <i>Distinguished Name</i> then click <b>OK</b>.
+    </p>
+    <pre>
+        <code>
+┌──────────────────────────────────────────────────────────┐
+│  Create New Attribute                                  X │
+├──────────────────────────────────────────────────────────┤
+│  ▲                                                       │
+│  │   /                                                   │
+│  │  /                                                    │
+│  │ /     Create a new Attribute Object                   │
+│  └──────►                                                │
+│                                                          │
+│ ┌─Identification ──────────────────────────────────────┐ │
+│ │                        ┌───────────────────────────┐ │ │
+│ │  Common Name           │ DataOwner                 │ │ │
+│ │                        └───────────────────────────┘ │ │
+│ │                        ┌───────────────────────────┐ │ │
+│ │  LDAP Display Name     │ dataOwner                 │ │ │
+│ │                        └───────────────────────────┘ │ │
+│ │                        ┌───────────────────────────┐ │ │
+│ │  Unique X500 Object ID │ 1.2.840.113556.1.8000.2554│ │ │
+│ │                        └───────────────────────────┘ │ │
+│ │                        ┌───────────────────────────┐ │ │
+│ │  Description           │                           │ │ │
+│ │                        └───────────────────────────┘ │ │
+│ └──────────────────────────────────────────────────────┘ │
+│ ┌─Syntax and Range─────────────────────────────────────┐ │
+│ │                        ┌───────────────────────────┐ │ │
+│ │  Syntax                │ Distinguished Name       ▼│ │ │
+│ │                        └───────────────────────────┘ │ │
+│ │                        ┌───────────────────────────┐ │ │
+│ │  Minimum               │                           │ │ │
+│ │                        └───────────────────────────┘ │ │
+│ │                        ┌───────────────────────────┐ │ │
+│ │  Maximum               │                           │ │ │
+│ │                        └───────────────────────────┘ │ │
+│ └──────────────────────────────────────────────────────┘ │
+│  ┌─┐                                                     │
+│  └─┘ Multi-valued     ┌────────┐  ┌────────┐  ┌────────┐ │
+│                       │   OK   │  │ Cancel │  │  Help  │ │
+│                       └────────┘  └────────┘  └────────┘ │
+└──────────────────────────────────────────────────────────┘
+        </code>
+    </pre>
+    <p>
+        <div class="blink">MESSAGE</div> Create the <b>DataSteward</b> and <b>DataCustodian</b> using the same method.
+    </p>
+
+</section>
+
+<section>
+    <h2>attribute association</h2>
+    <p>
+        With the new AD attributes created, they must now be associated with the computer class in the schema. Click on <b>classes</b> under the
+        Active Directory Schema, then in the right-most pane, locate and open the properties for the Computer class by double-clicking on it.
+    </p>
+    <pre>
+        <code>
+┌──────────────────────────────────────────────────────────────
+│ ┌─────────────────────────────┐┌────────────────────────────┐
+│ │Console Root                 ││Name            | Type      │
+│ │ ▼ Active Directory Schema   ││                            │
+│ │   ► Classes                 ││classStoreires    Structural│
+│ │   ► Attributes              ││comConnection...  Structural│
+│ │                             ││computer          Structural│
+│ │                             ││configuration     Structural│
+│ │                             ││connectionPoint   Abstract  │
+│ │                             ││contactction      Structural│
+│ │                             ││containeradTime   Structural│
+│ │                             ││whatYouSay?!      Inquiry   │
+│ │                             ││controlAccess...  Structural│
+│ └─────────────────────────────┘└────────────────────────────┘
+        </code>
+    </pre>
+    <p>
+        From the <i>Attributes</i> tab, click <b>Add...</b>
+    </p>
+    <pre>
+        <code>
+┌─────────────────────────────────────────────────────────┐
+│ computer Properties                                   X │
+├─────────────────────────────────────────────────────────┤
+│                         ┌────────────┐                  │
+│ General   Relationship  │ Attributes │ Default Security │
+├─────────────────────────┘            └──────────────────┤
+│ []─┬─[]                                                 │
+│    │         computer                                   │
+│    └─[]                                                 │
+│  ────────────────────────────────────────────────────── │
+│             ┌─────────────────────────┐                 │
+│  Mandatory: │                         │                 │
+│             │                         │                 │
+│             │                         │                 │
+│             │                         │                 │
+│             │                         │                 │
+│             │                         │                 │
+│             │                         │                 │
+│             └─────────────────────────┘                 │
+│             ┌─────────────────────────┐  ┌──────────┐   │
+│  Optional:  │catalogs                 │  │  Add...  │   │
+│             │cn                       │  └──────────┘   │
+│             │defaultLocalPolicyObject │  ┌──────────┐   │
+│             │dNSHostName              │  │  Remove  │   │
+│             │location                 │  └──────────┘   │
+│             │machineRole              │                 │
+│             │managedBy                │                 │
+│             └─────────────────────────┘                 │
+│                                                         │
+│                                                         │
+├─────────────────────────────────────────────────────────┤
+│             ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ │
+│             │   OK   │ │ Cancel │ │ Apply  │ │  Help  │ │
+│             └────────┘ └────────┘ └────────┘ └────────┘ │
+└─────────────────────────────────────────────────────────┘
+        </code>
+    </pre>
+    <p>
+        Add each of the newly created attributes by highlighting them (one at a time), clicking <b>OK</b> after each.
+    </p>
+    <pre>
+        <code>
+┌─────────────────────────────────────────────────────────┐
+│ Select schema Object                                  X │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│                                                         │
+│   Select a schema object:                               │
+│                                                         │
+│   ┌────────────────────────────────────┬─┐  ┌────────┐  │
+│   │allYourBaseAreBelongToUs            │▲│  │   OK   │  │
+│   │cRLObject                           │ │  └────────┘  │
+│   │cRLPartitionedRevocationList        │ │  ┌────────┐  │
+│   │crossCertificatePair                ├─┤  │ Cancel │  │
+│   │currentLocation                     ├─┤  └────────┘  │
+│   │currentParentCA                     │ │              │
+│   │currentValue                        │ │              │
+│   │currMachineId                       │ │              │
+│   ├────────────────────────────────────┤ │              │
+│   │dataCustodian                       │ │              │
+│   ├────────────────────────────────────┤ │              │
+│   │dataOwner                           │ │              │
+│   │dataSteward                         │ │              │
+│   │dBCSPwd                             │ │              │
+│   │dc                                  │ │              │
+│   │defaultClassStore                   │ │              │
+│   │defaultGroup                        │ │              │
+│   │defaultHidingValue                  │ │              │
+│   │defaultLocalPolicyObject            │ │              │
+│   │defaultObjectCategory               │ │              │
+│   │defaultPriority                     │ │              │
+│   │defaultSecurityDescriptor           │ │              │
+│   │youAreOnTheWaytoDestruction         │▼│              │
+│   └────────────────────────────────────┴─┘              │
+└─────────────────────────────────────────────────────────┘
+        </code>
+    </pre>
+    <p>
+        With the three attributes added. Click <b>Apply</b> and close the computer properties window.
+    </p>
+        <pre>
+        <code>
+ ┌─────────────────────────────────────────────────────────┐ 
+ │ computer Properties                                   X │ 
+ ├─────────────────────────────────────────────────────────┤ 
+ │                         ┌────────────┐                  │ 
+ │ General   Relationship  │ Attributes │ Default Security │ 
+ ├─────────────────────────┘            └──────────────────┤ 
+ │ []─┬─[]                                                 │ 
+ │    │         computer                                   │ 
+ │    └─[]                                                 │ 
+ │  ────────────────────────────────────────────────────── │ 
+ │             ┌─────────────────────────┐                 │ 
+ │  Mandatory: │                         │                 │ 
+ │             │                         │                 │ 
+ │             │                         │                 │ 
+ │             │                         │                 │ 
+ │             │                         │                 │ 
+ │             │                         │                 │ 
+ │             │                         │                 │ 
+ │             └─────────────────────────┘                 │ 
+ │             ┌─────────────────────────┐  ┌──────────┐   │ 
+ │  Optional:  │catalogs                 │  │  Add...  │   │ 
+ │             │cn                       │  └──────────┘   │ 
+ │             │dataCustodian            │  ┌──────────┐   │ 
+ │             │dataOwner                │  │  Remove  │   │ 
+ │             │dataSteward              │  └──────────┘   │ 
+ │             │defaultLocalPolicyObject │                 │ 
+ │             │takeOffEvery'Zig         │                 │ 
+ │             └─────────────────────────┘                 │ 
+ │                                                         │ 
+ │                                                         │ 
+ ├─────────────────────────────────────────────────────────┤ 
+ │             ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ │ 
+ │             │   OK   │ │ Cancel │ │ Apply  │ │  Help  │ │ 
+ │             └────────┘ └────────┘ └────────┘ └────────┘ │ 
+ └─────────────────────────────────────────────────────────┘ 
+        </code>
+    </pre>
+</section>
+
+<section>
+    <h2>attribute population</h2>
+    <p>
+        Creating the new attributes and associating them with computer objects in Active Directory is the <i>easy</i> part, the real work comes with examining each class of
+        server in the environment and determining how to populate best to populate them. Previously, I have see the syntax (values) for these attributes set to Unicode String
+        rather than DistinguishedName, as I have done here. There are pros and cons to using either method, however I prefer DistinguishedName because it forces integrity of
+        the value attributes and as a result, is better suited for automation efforts to ingest the attribute values. 
+    </p>
+    <p>
+        If we were to pick up the OU structure provided at the start of this post, and drop it onto the Enterprise D, Worf would be head of the Security department. So he
+        would be the DataOwner for servers in that OU structure. In that same vein, the group named Security would be the DataCustodians, and the Engineering group
+        would be responsible for the hardware, compute resources, backups, etc. For the AD computer named DUOSERVER01, the PowerShell code below would be used to populate
+        the attributes.
+    </p>
+    <pre>
+        <code>
+$c = Get-ADComputer -Identity DUOSERVER01
+$e = Get-ADGroup -Identity Engineering
+$s = Get-ADGroup -Identity Security
+$w = Get-ADUser -Identity Worf
+
+Set-ADComputer -Identity $c -Add @{
+    dataOwner=$w.DistinguishedName;
+    dataSteward=$s.DistinguishedName;
+    dataCustodian=$e.DistinguishedName
+}
+        </code>
+    </pre>
+    <p>
+        Running the PowerShell code below will confirm that the attributes have been set, and should any of the AD objects specified as attribute values be deleted, it
+        will be reflected <i>in</i> the attribute value either by showing the deleted objects container in the value DistinguishedName or by showing the SID of the
+        <i>former</i> object if it has already been purged, or if the AD recycle bin feature is not enabled.
+    </p>
+    <pre>
+        <code>
+Get-ADComputer -Identity $c -Properties * | Format-List data*
+
+dataCustodian : CN=Engineering,OU=groups,OU=enterprise d,DC=ad,DC=lab,DC=local
+dataOwner     : CN=Worf Son of Mogh,OU=users,OU=enterprise d,DC=ad,DC=lab,DC=local
+dataSteward   : CN=Security,OU=groups,OU=enterprise d,DC=ad,DC=lab,DC=local
+        </code>
+    </pre>
+    <p>
+        So you have tracked down all parties involved in data governance for the servers in your environment, attributes have been created, associated with computer
+        objects, and populated appropriately... <i>Now what?</i> Well, the next time audit asks for any data governance information regarding the servers, you know
+        exactly who to involve. The DataCustodian attribute can be used in a meaningful way to organize the OU structure for servers and with organization
+        in place, admin rights more easily defined on servers. Additionally, assumming the groups used to populate the attributes are mail-enabled, the values
+        can be ingested for automation and alerting. Send an email to Secrity if patches are missing from the duo server, or email the engineering team if backups for
+        the server are repeatedly failing. Have the SIEM/SOAR notify Lt. Cmdr. Worf of multiple failed logon attempts... you get the idea, this is a scenario where
+        you will find uses for the attributes once they are in place and populated, and once you have experienced AD with these attributes, you will probably add them
+        to every environment you manage from then on.
+    </p>
+    <p>
+        <i>for great justice!</i>
+    </p>
+</section>
+
+</body>
+</html>

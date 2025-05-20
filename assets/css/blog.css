@@ -1,14 +1,29 @@
+.blink {
+    animation: blinker 2s linear infinite;
+    color: rgb(138, 243, 138);
+    display:inline-flex;
+    font-size: 14pt;
+    font-family: monospace;
+    padding: 3px;
+}
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
+}
 .index-container {
     display:flexbox;
     justify-content: center;
     align-items: center;
     padding-top: 20vh;
 }
-a:link, a:visited, a:active {
+a:link, a:visited, a:active, a:default {
     color:rgb(4, 174, 4);
+    text-decoration: none;
 }
 a:hover {
     color:rgb(120, 245, 120);
+    text-decoration: underline;
 }
 b {
     color: rgb(138, 243, 138);
@@ -26,6 +41,9 @@ code {
 }
 h1, h2, h3, h4 {
     color:rgb(4, 174, 4);
+}
+li {
+    padding-bottom: 10pt;
 }
 nav {
     font-size: 16pt;
