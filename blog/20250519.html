@@ -94,25 +94,25 @@ ad.lab.local
     <p>
         Launch Microsoft management console (mmc).      
     </p>
-    <img src="/assets/images/20250519/01.png">
+    <a href="/assets/images/20250519/01.png"><img src="/assets/images/20250519/01.png"></a>
     <p>
         Strike <b>ctrl + m</b> on your keyboard, select <i>Active Directory Schema</i> from the list of available snap-ins. Click <b>Add ></b>, followed by <b>OK</b>.
     </p>
-    <img src="/assets/images/20250519/02.png">
+    <a href="/assets/images/20250519/02.png"><img src="/assets/images/20250519/02.png"></a>
     <p>
         Expand <i>Active Directory Schema</i>, right-click on <i>Attributes</i> and select <b>Create Attribute...</b>
     </p>
-    <img src="/assets/images/20250519/03.png">
+    <a href="/assets/images/20250519/03.png"><img src="/assets/images/20250519/03.png"></a>
     <p>
         Heed this warning; The attribute you create will exist in AD forever. Click <b>Continue</b>.
     </p>
-    <img src="/assets/images/20250519/04.png">
+    <a href="/assets/images/20250519/04.png"><img src="/assets/images/20250519/04.png"></a>
     <p>
         Fill in the <i>Common Name</i> and <i>Unique X500 Object ID</i> (OID) fields. The <i>LDAP Display Name</i> will automatically generate. You can use
         <a href="https://github.com/ds8086/PowerShell/blob/main/ActiveDirectory/New-X500ObjectId.ps1" target="_blank">this script</a> for generating X500 OIDs.
         Fill in the description field as you see fit. For the Syntax, select <i>Distinguished Name</i> then click <b>OK</b>.
     </p>
-    <img src="/assets/images/20250519/05.png">
+    <a href="/assets/images/20250519/05.png"><img src="/assets/images/20250519/05.png"></a>
     <p>
         <div class="blink">MESSAGE</div> Create the <b>DataSteward</b> and <b>DataCustodian</b> using the same method.
     </p>
@@ -124,19 +124,19 @@ ad.lab.local
         With the new AD attributes created, they must now be associated with the computer class in the schema. Click on <b>classes</b> under the
         Active Directory Schema, then in the right-most pane, locate and open the properties for the Computer class by double-clicking on it.
     </p>
-    <img src="/assets/images/20250519/06.png">
+    <a href="/assets/images/20250519/06.png"><img src="/assets/images/20250519/06.png"></a>
     <p>
         From the <i>Attributes</i> tab, click <b>Add...</b>
     </p>
-    <img src="/assets/images/20250519/07.png">
+    <a href="/assets/images/20250519/07.png"><img src="/assets/images/20250519/07.png"></a>
     <p>
         Add each of the newly created attributes by highlighting them (one at a time), clicking <b>OK</b> after each.
     </p>
-    <img src="/assets/images/20250519/08.png">
+    <a href="/assets/images/20250519/08.png"><img src="/assets/images/20250519/08.png"></a>
     <p>
         With the three attributes added. Click <b>Apply</b> and close the computer properties window.
     </p>
-    <img src="/assets/images/20250519/09.png">
+    <a href="/assets/images/20250519/09.png"><img src="/assets/images/20250519/09.png"></a>
 </section>
 
 <section>
@@ -172,7 +172,7 @@ Set-ADComputer -Identity $c -Add @{
         will be reflected <i>in</i> the attribute value either by showing the deleted objects container in the value DistinguishedName or by showing the SID of the
         <i>former</i> object if it has already been purged, or if the AD recycle bin feature is not enabled.
     </p>
-    <img src="/assets/images/20250519/10.png">
+    <a href="/assets/images/20250519/10.png"><img src="/assets/images/20250519/10.png"></a>
     <p>
         So you have tracked down all parties involved in data governance for the servers in your environment, attributes have been created, associated with computer
         objects, and populated appropriately... <i>Now what?</i> Well, the next time audit asks for any data governance information regarding the servers, you know
