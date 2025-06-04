@@ -92,138 +92,30 @@ ad.lab.local
     </p>
     <code>regsvr32 schmmgmt.dll</code>
     <p>
-        Launch Microsoft management console (mmc).
+        Launch Microsoft management console (mmc).      
     </p>
-    <pre>
-        <code>
- ┌──────────────────────────────────────────────────────────────┐ 
- │  Run                                                         │ 
- ├──────────────────────────────────────────────────────────────┤ 
- │                                                              │ 
- │ ┌───┐  Type the name of a program, folder, document, or      │ 
- │ └───┘  Internet resource, and Windows will open it for you.  │ 
- │                                                              │ 
- │       ┌─────────────────────────────────────────────────────┐│ 
- │ Open: │ mmc                                                 ││ 
- │       └─────────────────────────────────────────────────────┘│ 
- │                                                              │ 
- ├──────────────────────────────────────────────────────────────┤ 
- │                      ┌──────────┐ ┌──────────┐ ┌──────────┐  │ 
- │                      │    OK    │ │  Cancel  │ │ Browse...│  │ 
- │                      └──────────┘ └──────────┘ └──────────┘  │ 
- └──────────────────────────────────────────────────────────────┘ 
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/01.png">
     <p>
         Strike <b>ctrl + m</b> on your keyboard, select <i>Active Directory Schema</i> from the list of available snap-ins. Click <b>Add ></b>, followed by <b>OK</b>.
     </p>
-    <pre>
-        <code>
-┌─────────────────────────────────────────────────────────────────┐
-│ Add or Remove Snap-ins                                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│ Available snap-ins                                              │
-│ ┌──────────────────────────┐       ┌──────────────────────────┐ │
-│ │Active Directory Domains..│       │Console Root              │ │
-│ │Active Directory Schema   │       │                          │ │
-│ │Active Directory Sites ...│       │                          │ │
-│ │Active Directory Users....│┌─────┐│                          │ │
-│ │ActiveX Control           ││Add >││                          │ │
-│ │ADSI Edit                 │└─────┘│                          │ │
-│ │How are you gentlemen?    │       │                          │ │
-│ │Authorization Manager     │       │                          │ │
-│ │Certificates              │       │                          │ │
-│ │Component Services        │       │                          │ │
-│ │...                       │       │                          │ │
-│ └──────────────────────────┘       └──────────────────────────┘ │
-│                                           ┌────────┐ ┌────────┐ │
-│                                           │   OK   │ │ Cancel │ │
-│                                           └────────┘ └────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/02.png">
     <p>
         Expand <i>Active Directory Schema</i>, right-click on <i>Attributes</i> and select <b>Create Attribute...</b>
     </p>
-    <pre>
-        <code>
-┌────────────────────────────────────────────────────────────── 
-│ ┌─────────────────────────────┐┌────────────────────────────┐ 
-│ │Console Root                 ││Name              | Syntax  │ 
-│ │ ▼ Active Directory Schema   ││                            │ 
-│ │   ► Classes                 ││AccountExpires      Large...│ 
-│ │   ► Attributes              ││accountNameHistory  Unico...│ 
-│ │    ┌──────────────────────┐ ││aCSAggregateTok...  Large...│ 
-│ │    │ Create Attribute...  │ ││aCSAllocableRSV...  Large...│ 
-│ │    │  ─────────────────── │ ││aCSCacheTimeout...  Integ...│ 
-│ │    │ New                  │ ││aCSDirection        Integ...│ 
-│ │    │  ─────────────────── │ ││aCSDSBMDeadTime     Integ...│ 
-│ │    │ View                 │ ││aCSDSBMPriority     Integ...│ 
-│ │    │ New Window from Here │ ││aCSDSBMRefresh      Integ...│ 
-│ │    │  ─────────────────── │ ││aCSEnableACSSer...  Boole...│ 
-│ │    │ New Taskpad View...  │ ││aCSEnableRSVPAc...  Boole...│ 
-│ │    │  ─────────────────── │ ││aCSEnableRSVPMe...  Boole...│ 
-│ │    │ Refresh              │ ││aCSEventLogLevel    Integ...│ 
-│ │    │ Export List...       │ ││aCSIdentityName     Unico...│ 
-│ │    │  ─────────────────── │ ││aCSMaxAggregate...  Large...│ 
-│ │    │ Help                 │ ││aCSMaxDurationP...  Integ...│ 
-│ │    └──────────────────────┘ ││aCSMaximumSDUSi...  Large...│ 
-│ └─────────────────────────────┘└────────────────────────────┘ 
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/03.png">
+    <p>
+        Heed this warning; The attribute you create will exist in AD forever. Click <b>Continue</b>.
+    </p>
+    <img src="/assets/images/20250519/04.png">
     <p>
         Fill in the <i>Common Name</i> and <i>Unique X500 Object ID</i> (OID) fields. The <i>LDAP Display Name</i> will automatically generate. You can use
         <a href="https://github.com/ds8086/PowerShell/blob/main/ActiveDirectory/New-X500ObjectId.ps1" target="_blank">this script</a> for generating X500 OIDs.
         Fill in the description field as you see fit. For the Syntax, select <i>Distinguished Name</i> then click <b>OK</b>.
     </p>
-    <pre>
-        <code>
-┌──────────────────────────────────────────────────────────┐
-│  Create New Attribute                                  X │
-├──────────────────────────────────────────────────────────┤
-│  ▲                                                       │
-│  │   /                                                   │
-│  │  /                                                    │
-│  │ /     Create a new Attribute Object                   │
-│  └──────►                                                │
-│                                                          │
-│ ┌─Identification ──────────────────────────────────────┐ │
-│ │                        ┌───────────────────────────┐ │ │
-│ │  Common Name           │ DataOwner                 │ │ │
-│ │                        └───────────────────────────┘ │ │
-│ │                        ┌───────────────────────────┐ │ │
-│ │  LDAP Display Name     │ dataOwner                 │ │ │
-│ │                        └───────────────────────────┘ │ │
-│ │                        ┌───────────────────────────┐ │ │
-│ │  Unique X500 Object ID │ 1.2.840.113556.1.8000.2554│ │ │
-│ │                        └───────────────────────────┘ │ │
-│ │                        ┌───────────────────────────┐ │ │
-│ │  Description           │                           │ │ │
-│ │                        └───────────────────────────┘ │ │
-│ └──────────────────────────────────────────────────────┘ │
-│ ┌─Syntax and Range─────────────────────────────────────┐ │
-│ │                        ┌───────────────────────────┐ │ │
-│ │  Syntax                │ Distinguished Name       ▼│ │ │
-│ │                        └───────────────────────────┘ │ │
-│ │                        ┌───────────────────────────┐ │ │
-│ │  Minimum               │                           │ │ │
-│ │                        └───────────────────────────┘ │ │
-│ │                        ┌───────────────────────────┐ │ │
-│ │  Maximum               │                           │ │ │
-│ │                        └───────────────────────────┘ │ │
-│ └──────────────────────────────────────────────────────┘ │
-│  ┌─┐                                                     │
-│  └─┘ Multi-valued     ┌────────┐  ┌────────┐  ┌────────┐ │
-│                       │   OK   │  │ Cancel │  │  Help  │ │
-│                       └────────┘  └────────┘  └────────┘ │
-└──────────────────────────────────────────────────────────┘
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/05.png">
     <p>
         <div class="blink">MESSAGE</div> Create the <b>DataSteward</b> and <b>DataCustodian</b> using the same method.
     </p>
-
 </section>
 
 <section>
@@ -232,148 +124,19 @@ ad.lab.local
         With the new AD attributes created, they must now be associated with the computer class in the schema. Click on <b>classes</b> under the
         Active Directory Schema, then in the right-most pane, locate and open the properties for the Computer class by double-clicking on it.
     </p>
-    <pre>
-        <code>
-┌──────────────────────────────────────────────────────────────
-│ ┌─────────────────────────────┐┌────────────────────────────┐
-│ │Console Root                 ││Name            | Type      │
-│ │ ▼ Active Directory Schema   ││                            │
-│ │   ► Classes                 ││classStoreires    Structural│
-│ │   ► Attributes              ││comConnection...  Structural│
-│ │                             ││computer          Structural│
-│ │                             ││configuration     Structural│
-│ │                             ││connectionPoint   Abstract  │
-│ │                             ││contactction      Structural│
-│ │                             ││containeradTime   Structural│
-│ │                             ││whatYouSay?!      Inquiry   │
-│ │                             ││controlAccess...  Structural│
-│ └─────────────────────────────┘└────────────────────────────┘
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/06.png">
     <p>
         From the <i>Attributes</i> tab, click <b>Add...</b>
     </p>
-    <pre>
-        <code>
-┌─────────────────────────────────────────────────────────┐
-│ computer Properties                                   X │
-├─────────────────────────────────────────────────────────┤
-│                         ┌────────────┐                  │
-│ General   Relationship  │ Attributes │ Default Security │
-├─────────────────────────┘            └──────────────────┤
-│ []─┬─[]                                                 │
-│    │         computer                                   │
-│    └─[]                                                 │
-│  ────────────────────────────────────────────────────── │
-│             ┌─────────────────────────┐                 │
-│  Mandatory: │                         │                 │
-│             │                         │                 │
-│             │                         │                 │
-│             │                         │                 │
-│             │                         │                 │
-│             │                         │                 │
-│             │                         │                 │
-│             └─────────────────────────┘                 │
-│             ┌─────────────────────────┐  ┌──────────┐   │
-│  Optional:  │catalogs                 │  │  Add...  │   │
-│             │cn                       │  └──────────┘   │
-│             │defaultLocalPolicyObject │  ┌──────────┐   │
-│             │dNSHostName              │  │  Remove  │   │
-│             │location                 │  └──────────┘   │
-│             │machineRole              │                 │
-│             │managedBy                │                 │
-│             └─────────────────────────┘                 │
-│                                                         │
-│                                                         │
-├─────────────────────────────────────────────────────────┤
-│             ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ │
-│             │   OK   │ │ Cancel │ │ Apply  │ │  Help  │ │
-│             └────────┘ └────────┘ └────────┘ └────────┘ │
-└─────────────────────────────────────────────────────────┘
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/07.png">
     <p>
         Add each of the newly created attributes by highlighting them (one at a time), clicking <b>OK</b> after each.
     </p>
-    <pre>
-        <code>
-┌─────────────────────────────────────────────────────────┐
-│ Select schema Object                                  X │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│                                                         │
-│   Select a schema object:                               │
-│                                                         │
-│   ┌────────────────────────────────────┬─┐  ┌────────┐  │
-│   │allYourBaseAreBelongToUs            │▲│  │   OK   │  │
-│   │cRLObject                           │ │  └────────┘  │
-│   │cRLPartitionedRevocationList        │ │  ┌────────┐  │
-│   │crossCertificatePair                ├─┤  │ Cancel │  │
-│   │currentLocation                     ├─┤  └────────┘  │
-│   │currentParentCA                     │ │              │
-│   │currentValue                        │ │              │
-│   │currMachineId                       │ │              │
-│   ├────────────────────────────────────┤ │              │
-│   │dataCustodian                       │ │              │
-│   ├────────────────────────────────────┤ │              │
-│   │dataOwner                           │ │              │
-│   │dataSteward                         │ │              │
-│   │dBCSPwd                             │ │              │
-│   │dc                                  │ │              │
-│   │defaultClassStore                   │ │              │
-│   │defaultGroup                        │ │              │
-│   │defaultHidingValue                  │ │              │
-│   │defaultLocalPolicyObject            │ │              │
-│   │defaultObjectCategory               │ │              │
-│   │defaultPriority                     │ │              │
-│   │defaultSecurityDescriptor           │ │              │
-│   │youAreOnTheWaytoDestruction         │▼│              │
-│   └────────────────────────────────────┴─┘              │
-└─────────────────────────────────────────────────────────┘
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/08.png">
     <p>
         With the three attributes added. Click <b>Apply</b> and close the computer properties window.
     </p>
-        <pre>
-        <code>
- ┌─────────────────────────────────────────────────────────┐ 
- │ computer Properties                                   X │ 
- ├─────────────────────────────────────────────────────────┤ 
- │                         ┌────────────┐                  │ 
- │ General   Relationship  │ Attributes │ Default Security │ 
- ├─────────────────────────┘            └──────────────────┤ 
- │ []─┬─[]                                                 │ 
- │    │         computer                                   │ 
- │    └─[]                                                 │ 
- │  ────────────────────────────────────────────────────── │ 
- │             ┌─────────────────────────┐                 │ 
- │  Mandatory: │                         │                 │ 
- │             │                         │                 │ 
- │             │                         │                 │ 
- │             │                         │                 │ 
- │             │                         │                 │ 
- │             │                         │                 │ 
- │             │                         │                 │ 
- │             └─────────────────────────┘                 │ 
- │             ┌─────────────────────────┐  ┌──────────┐   │ 
- │  Optional:  │catalogs                 │  │  Add...  │   │ 
- │             │cn                       │  └──────────┘   │ 
- │             │dataCustodian            │  ┌──────────┐   │ 
- │             │dataOwner                │  │  Remove  │   │ 
- │             │dataSteward              │  └──────────┘   │ 
- │             │defaultLocalPolicyObject │                 │ 
- │             │takeOffEvery'Zig         │                 │ 
- │             └─────────────────────────┘                 │ 
- │                                                         │ 
- │                                                         │ 
- ├─────────────────────────────────────────────────────────┤ 
- │             ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ │ 
- │             │   OK   │ │ Cancel │ │ Apply  │ │  Help  │ │ 
- │             └────────┘ └────────┘ └────────┘ └────────┘ │ 
- └─────────────────────────────────────────────────────────┘ 
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/09.png">
 </section>
 
 <section>
@@ -409,15 +172,7 @@ Set-ADComputer -Identity $c -Add @{
         will be reflected <i>in</i> the attribute value either by showing the deleted objects container in the value DistinguishedName or by showing the SID of the
         <i>former</i> object if it has already been purged, or if the AD recycle bin feature is not enabled.
     </p>
-    <pre>
-        <code>
-Get-ADComputer -Identity $c -Properties * | Format-List data*
-
-dataCustodian : CN=Engineering,OU=groups,OU=enterprise d,DC=ad,DC=lab,DC=local
-dataOwner     : CN=Worf Son of Mogh,OU=users,OU=enterprise d,DC=ad,DC=lab,DC=local
-dataSteward   : CN=Security,OU=groups,OU=enterprise d,DC=ad,DC=lab,DC=local
-        </code>
-    </pre>
+    <img src="/assets/images/20250519/10.png">
     <p>
         So you have tracked down all parties involved in data governance for the servers in your environment, attributes have been created, associated with computer
         objects, and populated appropriately... <i>Now what?</i> Well, the next time audit asks for any data governance information regarding the servers, you know
@@ -427,9 +182,6 @@ dataSteward   : CN=Security,OU=groups,OU=enterprise d,DC=ad,DC=lab,DC=local
         the server are repeatedly failing. Have the SIEM/SOAR notify Lt. Cmdr. Worf of multiple failed logon attempts... you get the idea, this is a scenario where
         you will find uses for the attributes once they are in place and populated, and once you have experienced AD with these attributes, you will probably add them
         to every environment you manage from then on.
-    </p>
-    <p>
-        <i>for great justice!</i>
     </p>
 </section>
 

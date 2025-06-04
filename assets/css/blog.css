@@ -42,6 +42,9 @@ code {
 h1, h2, h3, h4 {
     color:rgb(4, 174, 4);
 }
+img {
+    max-width: 100%;
+}
 li {
     padding-bottom: 10pt;
 }
