@@ -6,51 +6,114 @@
     font-family: monospace;
     padding: 3px;
 }
+
 @keyframes blinker {
     50% {
         opacity: 0;
     }
 }
+
 .index-container {
     display:flexbox;
     justify-content: center;
     align-items: center;
     padding-top: 20vh;
 }
+
+.footer {
+    background-color: rgb(5, 5, 5);
+    font-size: 16pt;
+    margin-left: -16px;
+    padding-bottom: 16px;
+    padding-top: 16px;
+    text-align: center;
+}
+
+.sidebar {
+    margin: 0;
+    padding: 0;
+    width: 200px;
+    background-color: rgb(5, 5, 5);
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+    font-size: 16pt;
+}
+
+.sidebar a {
+    display: block;
+    color:rgb(4, 174, 4);
+    padding: 16px;
+    text-decoration: none;
+}
+ 
+.sidebar a:hover {
+    color:rgb(120, 245, 120);
+}
+
 a:link, a:visited, a:active, a:default {
     color:rgb(4, 174, 4);
     text-decoration: none;
 }
+
 a:hover {
     color:rgb(120, 245, 120);
     text-decoration: underline;
 }
+
 b {
     color: rgb(138, 243, 138);
 }
+
 body {
+    margin: 0;
     background-color: black;
     color: rgb(200, 200, 200);
     font-family: monospace;
     font-size: 12pt
 }
+
 code {
     color: rgb(138, 243, 138);
     display: block;
     overflow-x: scroll;
 }
+
+div.content {
+    margin-left: 200px;
+    padding: 1px 16px;
+    height: 1000px;
+}
+
 h1, h2, h3, h4 {
     color:rgb(4, 174, 4);
 }
+
 img {
     max-width: 100%;
 }
+
 li {
     padding-bottom: 10pt;
 }
-nav {
-    font-size: 16pt;
-}
+
 pre {
     color: rgb(138, 243, 138);
+}
+
+@media screen and (max-width: 700px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    .sidebar a {float: left;}
+    div.content {margin-left: 0;}
+}
+
+@media screen and (max-width: 400px) {
+    .sidebar a {
+        text-align: center;
+        float: none;
+    }
 }
