@@ -70,6 +70,7 @@ code {
 
 div.content {
     margin-left: 200px;
+    margin-right: 400px;
     padding: 1px 16px;
     height: 1000px;
 }
@@ -100,6 +101,12 @@ table, th, td {
     border-collapse: collapse;
 }
 
+@media screen and (max-width: 1900px) {
+    div.content {
+        margin-right: 0;
+    }
+}
+
 @media screen and (max-width: 700px) {
     .sidebar {
         width: 100%;
@@ -107,7 +114,10 @@ table, th, td {
         position: relative;
     }
     .sidebar a {float: left;}
-    div.content {margin-left: 0;}
+    div.content {
+        margin-left: 0;
+        margin-right: 0;
+    }
 }
 
 @media screen and (max-width: 400px) {
