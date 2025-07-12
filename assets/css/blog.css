@@ -2,16 +2,30 @@
     display:flexbox;
     justify-content: center;
     align-items: center;
-    padding-top: 20vh;
+    padding-top: 10vh;
+}
+
+.index-footer {
+    background-color: rgb(5, 5, 5);
+    bottom: 0px;
+    font-size: 9pt;
+    padding-bottom: 16px;
+    padding-top: 16px;
+    position: fixed;
+    text-align: center;
+    width: 100%;
 }
 
 .footer {
     background-color: rgb(5, 5, 5);
+    bottom: 0px;
     font-size: 16pt;
-    margin-left: -16px;
+    margin-left: 0px;
     padding-bottom: 16px;
     padding-top: 16px;
+    position: relative;
     text-align: center;
+    width: 100%;
 }
 
 .footer b {
@@ -40,6 +54,28 @@
     color:rgb(120, 245, 120);
 }
 
+.pagenav {
+    padding: 0;
+    right: 0;
+    width: 200px;
+    background-color: rgb(5, 5, 5);
+    position: fixed;
+    height: 100%;
+    overflow: auto;
+    font-size: 14pt;
+}
+
+.pagenav a {
+    display: block;
+    color:rgb(4, 174, 4);
+    padding: 16px;
+    text-decoration: none;
+}
+ 
+.pagenav a:hover {
+    color:rgb(120, 245, 120);
+}
+
 a:link, a:visited, a:active, a:default {
     color:rgb(4, 174, 4);
     text-decoration: none;
@@ -64,15 +100,15 @@ body {
 
 code {
     color: rgb(138, 243, 138);
+    background-color: rgb(5, 5, 5);
     display: block;
     overflow-x: scroll;
 }
 
 div.content {
     margin-left: 200px;
-    margin-right: 400px;
+    margin-right: 200px;
     padding: 1px 16px;
-    height: 1000px;
 }
 
 h1 {
@@ -101,9 +137,12 @@ table, th, td {
     border-collapse: collapse;
 }
 
-@media screen and (max-width: 1900px) {
+@media screen and (max-width: 1280px) {
     div.content {
         margin-right: 0;
+    }
+    .pagenav {
+        display: none;
     }
 }
 
@@ -114,6 +153,9 @@ table, th, td {
         position: relative;
     }
     .sidebar a {float: left;}
+    .pagenav {
+        display: none;
+    }
     div.content {
         margin-left: 0;
         margin-right: 0;
@@ -124,5 +166,8 @@ table, th, td {
     .sidebar a {
         text-align: center;
         float: none;
+    }
+    .pagenav {
+        display: none;
     }
 }
