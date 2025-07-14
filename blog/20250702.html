@@ -18,10 +18,18 @@
     <a href="/about.html">about</a>
 </div>
 
+<div class="pagenav">
+    <a href="#there-from-here">there from here</a>
+    <a href="#sites-and-services">sites and services</a>
+    <a href="#dfs-and-shares">dfs and shares</a>
+    <a href="#referral-ordering">referral ordering</a>
+    <a href="#inter-site-transports">inter-site transports</a>
+</div>
+
 <div class="content">
 <section>
     <h1>2025.07.02</h1>
-    <h2>there from here</h2>
+    <h2 id="there-from-here">there from here</h2>
     <p>
         A friend and I were discussing Active Directory and DFS namespaces following some strange behavior on his network. Basically, while working from his home office in
         Vegas, DFS namespaces and folder targets behaved as expected serving data from the file server at the Vegas location. However, when working from the Elko office the
@@ -59,7 +67,7 @@
 </section>
 
 <section>
-    <h2>Sites and Services</h2>
+    <h2 id="sites-and-services">Sites and Services</h2>
     <p>
         <i>What does AD Sites and Services look like? Are all the sites and subnets there?</i>
         <br>
@@ -75,7 +83,7 @@
 </section>
 
 <section>
-    <h2>dfs and shares</h2>
+    <h2 id="dfs-and-shares">dfs and shares</h2>
     <p>
         <i>What do the DFS namespaces look like?</i>
         <br>
@@ -91,7 +99,7 @@
 </section>
 
 <section>
-    <h2>referral ordering</h2>
+    <h2 id="referral-ordering">referral ordering</h2>
     <p>
         My friend had already found the DFS folder target "Advanced" configuration to override referral ordering. Given how the DFS folder targets were being accessed, this
         was going to be the quick and dirty fix for his issue. The <b>reno</b> folder on <b>fs01</b> would be first priority among all targets. The <b>vegas</b> folder
@@ -109,7 +117,7 @@
 </section>
 
 <section>
-    <h2>inter-site transports</h2>
+    <h2 id="inter-site-transports">inter-site transports</h2>
     <p>
         <i>How do we fix this properly?</i>
         <br>

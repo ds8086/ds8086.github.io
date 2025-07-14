@@ -18,10 +18,18 @@
     <a href="/about.html">about</a>
 </div>
 
+<div class="pagenav">
+    <a href="#data-governance">data governance</a>
+    <a href="#attributes">attributes</a>
+    <a href="#creation" style="font-size: 12pt;">- creation</a>
+    <a href="#association" style="font-size: 12pt;">- association</a>
+    <a href="#population" style="font-size: 12pt;">- population</a>
+</div>
+
 <div class="content">
 <section>
     <h1>2025.05.19</h1>
-    <h2>data governance</h2>
+    <h2 id="data-governance">data governance</h2>
     <p>
         I had <a href="/blog/20250516.html">posted previously</a> on the topic of organizing AD in a way to make assigning admin rights on domain member servers easier. If you've
         yet to read that post, you should, but in summary the OU hierarchy for servers starts by defining the teams which require admin rights <i>on</i> servers and uses those
@@ -66,7 +74,7 @@ ad.lab.local
 </section>
 
 <section>
-    <h2>attribute creation</h2>
+    <h2 id="attributes">attributes</h2>
     <p>
         <b style="color: yellow;">WARNING: </b>
         If you are unfamiliar with the process of editing an AD schema, stop. Take the time to look up a comprehensive guide. At a high level, check the items below.
@@ -85,6 +93,7 @@ ad.lab.local
             Be certain it is not <a href="https://isitreadonlyfriday.com/" target="_blank">Read-Only Friday</a>.
         </li>
     </ul>
+    <h3 id="creation">creation</h3>
     <p>
         Log into the domain controller which holds the schema master FSMO role and run the command below from an administrative command prompt to register the schema management dll.
     </p>
@@ -117,7 +126,7 @@ ad.lab.local
 </section>
 
 <section>
-    <h2>attribute association</h2>
+    <h3 id="association">association</h3>
     <p>
         With the new AD attributes created, they must now be associated with the computer class in the schema. Click on <b>classes</b> under the
         Active Directory Schema, then in the right-most pane, locate and open the properties for the Computer class by double-clicking on it.
@@ -138,7 +147,7 @@ ad.lab.local
 </section>
 
 <section>
-    <h2>attribute population</h2>
+    <h3 id="population">population</h3>
     <p>
         Creating the new attributes and associating them with computer objects in Active Directory is the <i>easy</i> part, the real work comes with examining each class of
         server in the environment and determining how to populate best to populate them. Previously, I have see the syntax (values) for these attributes set to Unicode String

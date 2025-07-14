@@ -18,10 +18,17 @@
     <a href="/about.html">about</a>
 </div>
 
+<div class="pagenav">
+    <a href="#admin-rights">admin rights</a>
+    <a href="#group-policy">group policy</a>
+    <a href="#1-to-1" style="font-size: 12pt;">- 1-to-1</a>
+    <a href="#too-many-sids" style="font-size: 12pt;">- too many sids</a>
+</div>
+
 <div class="content">
 <section>
     <h1>2025.05.16</h1>
-    <h2>admin rights</h2>
+    <h2 id="admin-rights">admin rights</h2>
     <p>
         We have made it to the point where we can <i>all</i> agree that dedicated accounts should be used to administer servers and for that, I am grateful.
         How admin rights are actually <i>assigned</i> is another matter entirely and it all starts with how Active Directory is (or is not) organized.
@@ -94,14 +101,14 @@ ad.lab.local
 </section>
 
 <section>
-    <h2>group policy</h2>
+    <h2 id="group-policy">group policy</h2>
     <p>
         The GPO savvy will already know the next steps; using the previous example you would create three GPOs named something like, <b>Local Admins - db</b>,
         <b>Local Admins - sec</b>, and <b>Local Admins - web</b>. Each GPO has the Administrators group defined with a single group corresponding to the admin accounts for that
         business unit, and is then attached to the corresponding OU. <i>"But what about the Systems Administrators? They need admin rights on everything!"</i> Okay...
         so create another GPO named <b>Local Admins - all</b>, define the members of the Administrators group, and attach that to the top-most servers OU. Done.
     </p>
-    <h2>a group for every server</h2>
+    <h3 id="1-to-1">1-to-1</h3>
     <p>
         <i>"I actually have a clever way to assign admin groups to every server using a single GPO."</i><br><br>
         I'll bet you do. I know exactly what you're going to say; you'll create a group for <u>each</u> server in the environment, then you'll create a GPO which defines the 
@@ -162,6 +169,7 @@ $i = 0
 }
         </code>
     </pre>
+    <h3 id="too-many-sids">too many sids</h3>
     <p>
         You got the error below, didn't you? I hope Microsoft never "fixes" this.
     </p>
