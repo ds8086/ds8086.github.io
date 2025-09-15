@@ -214,8 +214,19 @@ journalctl -t sshd
     </pre>
     <a href="/assets/images/20250912/12.png"><img src="/assets/images/20250912/12.png"></a>
     <p>
-        Very good. The <b>tunnel</b> user can SSH into the server, but cannot tunnel traffic to a destination other than <b>192.168.1.11:3389</b>.
+        Very good. The <b>tunnel</b> user can SSH into the server, but cannot tunnel traffic to a destination other than <b>192.168.1.11:3389</b>. In addition to
+        restricting where traffic can be tunneled, the user can be assigned to the <b>nologin</b> shell via the code below.
     </p>
+    <pre>
+        <code>
+usermod -s /sbin/nologin tunnel
+        </code>
+    </pre>
+    <p>
+        Now, should the <b>tunnel</b> user attempt to log into the server via the console <i>or</i> SSH, the login will fail. With this in place the PuTTY config must
+        be updated to use the <i>Don't start a shell or command at all</i> protocol option in the <b>Connection > SSH</b> section as shown below.
+    </p>
+    <a href="/assets/images/20250912/13.png"><img src="/assets/images/20250912/13.png"></a>
     <h3 id="serverless">serverless</h3>
     <p>
         <i>"Wait! You could do all of this without a Linux server right?!"</i>
@@ -243,6 +254,13 @@ set forwarding-enabled=local
     </p>
     <p>
         Regardless of the method selected, beware of people who might care about SSH leaving your corporate network. Your tunnel may collapse.
+    </p>    
+</section>
+
+<section>
+    <h4>2025.09.15 edit</h4>
+    <p>
+        Added <b>nologin</b> shell to hardening config after conversation with JS.
     </p>
 </section>
 
