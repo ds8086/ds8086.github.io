@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.10.03</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/blog.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#good-knight">good (k)night</a>
+    <a href="#2025" style="font-size: 12pt;">- 2025</a>
+    <a href="#materials" style="font-size: 12pt;">- materials</a>
+    <a href="#kvm">kvm</a>
+    <a href="#disks" style="font-size: 12pt;">- disks</a>
+    <a href="#packages" style="font-size: 12pt;">- packages</a>
+    <a href="#networking" style="font-size: 12pt;">- networking</a>
+    <a href="#storage-pools" style="font-size: 12pt;">- storage pools</a>
+    <a href="#virtual-machines">virtual machines</a>
+    <a href="#template" style="font-size: 12pt;">- template</a>
+    <a href="#cloning" style="font-size: 12pt;">- cloning</a>
+    <a href="#backup" style="font-size: 12pt;">- backup</a>
+    <a href="#restore" style="font-size: 12pt;">- restore</a>
+    <a href="#final-thoughts">final thoughts</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.10.03</h1>
+    <h2 id="good-knight">good (k)night</h2>
+    <p>
+        My home lab has long run on ESXi 7 Update 3n. Why <i>this</i> release? For a few reasons... ESXi 7 was the last major release which would run on anything and
+        I do mean <i>anything</i>. At one point I was running it on an Optiplex 7040 small form factor desktop with an ancient i7 and 32GB of RAM. Following 
+        the decommission of my "mini-lab", it went on to power a Precision 7810 Tower which sports a hyperthreaded 10-core Xeon and 128GB of RAM... hard to believe was is
+        marketed as a workstation, amiright?
+    </p>
+    <p>
+        Why update 3n though? This update was one of the last releases prior to the 2023 Broadcom acquisition of VMWare. If you are new to IT or the virtualization space,
+        this accquisition was a <u>big</u> deal. The transition was anything but smooth; bookmarked knowledge base articles became dead links, free ESXi was (temporarily)
+        killed off, required downloads became nearly inaccessible, and Horizon was spun off to <a href="https://www.omnissa.com/" target="_blank">omnissa</a>, a company which
+        seemingly no one had heard of. The death of free ESXi was a shock to many sysadmins. It powered home labs, it taught many of us the ways of virtualization,
+        and provided the confidence to support VMWare in our corporate environments. Broadcom eventually started offering free ESXi again, but many had already moved on
+        adopting Proxmox as their home lab hypervisor. I tried Proxmox as well as XCP-NG, neither of which resonated with me, so I accepted the risk associated with running
+        outdated ESXi and moved on with my life...
+    </p>
+    <h3 id="2025">2025</h3>
+    <p>
+        ...Two years later and I find myself still running ESXi 7u3n. <i>Every</i> IT team is now at least <i>considering</i> VMWare alternatives. I have collegues preparing
+        for Hyper-V migrations in 2026. I have talked with multiple teams who are moving to <a href="https://www.nutanix.com/vmware-alternative" target=" _blank"">Nutanix</a>.
+        Meanwhile, Linux admins everywhere continue to say, <i>"Just run KVM"</i>. My lab was in a state of languish, the world had moved on without it. Finding myself
+        with abundant free time and a recent emboldened outlook on Linux, I decided it was time.
+    </p>
+    <p>
+        <i>"Good night, sweet prince, and flights of angels sing thee to thy rest."</i>
+    </p>
+    <a href="/assets/images/20251003/01.png"><img src="/assets/images/20251003/01.png"></a>
+    <h3 id="materials">materials</h3>
+    <p>
+        I have already eluded to my lab hardware, but here is the full materials breakdown for this endeavor.
+    </p>
+    <ul>
+        <li>
+            Dell Precision 7810 Tower
+            <ul>
+                <li>Intel Xeon E5-2640 v4 (10-core HT @ 2.4GHz)</li>
+                <li style="padding-bottom: 0pt;">128GB ECC RAM</li>
+            </ul>
+        </li>
+        <li>
+            Samsung 850 Evo SSD (500GB)
+            <ul>
+                <li style="padding-bottom: 0pt;">
+                    Older SSD with ~70k hours of service. Almalinux bare-metal install location.
+                </li>
+            </ul>
+        </li>
+        <li>
+            Samsung 870 Evo SSD (500GB)
+            <ul>
+                <li style="padding-bottom: 0pt;">
+                    Newer SSD with ~20k hours of service. VM disk storage.
+                </li>
+            </ul>
+        </li>
+        <li>
+            Western Digital Purple (1TB)
+            <ul>
+                <li style="padding-bottom: 0pt;">
+                    Spinning drive with ~37k hours of service. VM Backups.
+                </li>
+            </ul>
+        </li>
+        <li>Almalinux 9.6 ISO (minimal)</li>
+        <li><a href="https://rufus.ie/en/" target="_blank">Rufus</a></li>
+    </ul>
+</section>
+
+<section>
+    <h2 id="kvm">kvm</h2>
+    <p>
+        With a keyboard, monitor, and mouse connected to my lab box, I set about the Almalinux minimal installation. As you would expect, it is a well designed GUI
+        installation, I did not bother with screenshots and accepted the defaults for basically everything.
+    </p>
+    <h3 id="disks">disks</h3>
+    <p>
+        After a bit of fumbling around with <b>gdisk</b> and <b>mkfs</b> commands, I ended up with the disk configuration shown here.
+    </p>
+    <a href="/assets/images/20251003/02.png"><img src="/assets/images/20251003/02.png"></a>
+    <p>
+        A few folders were premptively created in <b>/mnt/</b> for the two additional drives and partitions...
+    </p>
+    <pre>
+        <code>
+mkdir /mnt/data
+mkdir /mnt/backup
+        </code>
+    </pre>
+    <p>
+        ...then the entries below were added to <b>/etc/fstab</b>.
+    </p>
+    <pre>
+        <code>
+# Samsung 870 EVO
+UUID=b0c8c9d9-7083-4fca-9e31-fccb4b08d0b7 /mnt/data     xfs     defaults        0 2
+
+# Western Digital Purple
+UUID=60f52c94-adf1-4871-8b8c-ad6e3551f927 /mnt/backup   ext4    defaults        0 2
+        </code>
+    </pre>
+    <p>
+        A quick reboot and the mounts are up.
+    </p>
+    <a href="/assets/images/20251003/03.png"><img src="/assets/images/20251003/03.png"></a>
+    <p>
+        <b>Tip:</b> Always add <b>/etc/fstab</b> entries using UUID. Linux is not guaranteed to discover devices in the same order on each boot.
+    </p>
+    <h3 id="packages">packages</h3>
+    <p>
+        With storage provisioned, packages can be installed, services configured, and firewall rules added. The code below handles KVM...
+    </p>
+    <pre>
+        <code>
+dnf update
+dnf install qemu-kvm libvirt libguestfs-tools libvirt-client virt-top virt-install -y
+systemctl enable --now libvirtd
+        </code>
+    </pre>
+    <p>
+        ...While this code takes care of cockpit. Hey! ESXi had a GUI so why not have one for KVM as well?
+    </p>
+    <pre>
+        <code>
+dnf install cockpit cockpit-machines cockpit-storaged -y
+systemctl enable --now cockpit.socket
+firewall-cmd --add-service=cockpit --permanent
+firewall-cmd --reload
+        </code>
+    </pre>
+    <h3 id="networking">networking</h3>
+    <p>
+        By default, KVM includes a NAT network. Not a fan. The last thing I want to deal with is a potential double NAT scenario for VMs which will be exposed to my home
+        network. The code below creates a bridge network named <b>br0</b> with my sole physical interface, <b>enp0s25</b> as the only member.
+    </p>
+    <pre>
+        <code>
+nmcli con add ifname br0 type bridge con-name br0
+nmcli con add type bridge-slave ifname enp0s25 master br0
+nmcli con down enp0s25
+nmcli con up br0
+        </code>
+    </pre>
+    <p>
+        With networking sorted on the host, the KVM config must be updated to match. For whatever reason, there is no means to create a bridge network via cockpit so
+        an XML file is created with the content below.
+    </p>
+    <h4>bridge.xml</h4>
+    <pre>
+        <code>
+&#60;network&#62;
+  &#60;name&#62;br0&#60;/name&#62;
+  &#60;forward mode="bridge"/&#62;
+  &#60;bridge name="br0" /&#62;
+&#60;/network&#62;
+        </code>
+    </pre>
+    <p>
+        The <b>virsh</b> commands below create the bridge network and disable the default NAT network. I'm leaving it defined in case I <i>need</i> a NAT network.
+    </p>
+    <pre>
+        <code>
+virsh net-define ./bridge.xml
+virsh net-start br0
+virsh net-autostart br0
+
+virsh net-destroy default
+virsh net-autostart default --disable
+        </code>
+    </pre>
+    <h3 id="storage-pools">storage pools</h3>
+    <p>
+        KVM has a default storage pool named <b>images</b> which points to the <b>/var/lib/libvirt/images</b> directory on the host. I am going to use the directory,
+        but for VM templates rather than running VM images. The <b>virsh</b> commands below remove the storage pool entirely.
+    </p>
+    <pre>
+        <code>
+virsh pool-destroy images
+virsh pool-delete images
+virsh pool-undefine images
+        </code>
+    </pre>
+    <p>
+        With the default storage pool removed, three XML files created to define the new storage pools for KVM.
+    </p>
+    <h4>images.xml</h4>
+    <pre>
+        <code>
+&#60;pool type='dir'&#62;
+  &#60;name&#62;images&#60;/name&#62;
+  &#60;target&#62;
+    &#60;path&#62;/mnt/data/images&#60;/path&#62;
+  &#60;/target&#62;
+&#60;/pool&#62;
+        </code>
+    </pre>
+    <h4>templates.xml</h4>
+    <pre>
+        <code>
+&#60;pool type='dir'&#62;
+  &#60;name&#62;templates&#60;/name&#62;
+  &#60;target&#62;
+    &#60;path&#62;/var/lib/libvirt/templates&#60;/path&#62;
+  &#60;/target&#62;
+&#60;/pool&#62;
+        </code>
+    </pre>
+    <h4>iso.xml</h4>
+    <pre>
+        <code>
+&#60;pool type='dir'&#62;
+  &#60;name&#62;iso&#60;/name&#62;
+  &#60;target&#62;
+    &#60;path&#62;/var/lib/libvirt/iso&#60;/path&#62;
+  &#60;/target&#62;
+&#60;/pool&#62;
+        </code>
+    </pre>
+    <p>
+        The code below ingests the XML files and creates the storage pools.
+    </p>
+    <pre>
+        <code>
+mkdir /mnt/data/images
+mkdir /var/lib/libvirt/templates
+mkdir /var/lib/libvirt/iso
+
+virsh pool-define images.xml
+virsh pool-start images
+virsh pool-autostart images
+
+virsh pool-define templates.xml
+virsh pool-start templates
+virsh pool-autostart templates
+
+virsh pool-define iso.xml
+virsh pool-start iso
+virsh pool-autostart iso
+        </code>
+    </pre>
+</section>
+
+<section>
+    <h2 id="virtual-machines">virtual machines</h2>
+    <p>
+        If you have used <i>any</i> type 1 or even type 2 hypervisor, creating virtual machines via cockpit will be very intuitive. If not... google it? Fumble around?
+        Figure it out, I believe in you... I'm not covering it here. If you find cockpit lacking for VM creation, other options do exist such as
+        <a href="https://virt-manager.org/download" target="_blank">Virtual Machine Manager (VMM)</a> which will run on any of the popular Linux distros and can be
+        made to run on Windows via the Linux Subsystem.
+    </p>
+    <h3 id="template">template</h3>
+    <p>
+        The first VM I created (<b>alma96</b>) acts as a template VM with the virtual disk residing in the <b>templates</b> storage pool. The VM is configured with
+        the "baseline" packages I include in all Almalinux powered VMs, fully updated, then powered down.
+    </p>
+    <a href="/assets/images/20251003/04.png"><img src="/assets/images/20251003/04.png"></a>
+    <h3 id="cloning">cloning</h3>
+    <p>
+        A literal <u>one-liner</u> is used to clone the VM. The parameters are even self-explanatory.
+    </p>
+    <pre>
+        <code>
+virt-clone --original alma96 --name clone --file /mnt/data/images/clone.qcow2
+        </code>
+    </pre>
+    <a href="/assets/images/20251003/05.png"><img src="/assets/images/20251003/05.png"></a>
+    <h3 id="backup">backup</h3>
+    <p>
+        When I was running ESXi on this lab box, backups were not really a concern. It's a lab environment and anything worth backing up was handled at the guest OS level.
+        Since I had this Western Digital Purple drive just sitting in a drawer, I figured why not throw it in my lab box and build my own backup script for KVM? As I typed
+        line, I heard a fellow homelab enthusiast in my head; <i>"Proxmox has native VM backups"</i>. I know... but part of this effort is also learning. If I can
+        make bare-bones KVM work, any hypervisor I'm charged with managing should be a breeze, right? Anyway...
+    </p>
+    <p>
+        ...I wrote a <a href="https://github.com/ds8086/Bash/blob/main/kvm/backup-domain.sh" target="_blank">bash script</a> which gracefully powers down and backs up
+        virtual machines. It is crude. Remember folks, I am a Windows engineer by trade. I found that if a VM disk file is created via specifying a storage pool rather
+        than a path, my script cannot deal with it. This script is really more than I was planning to do for this post, long-term I want a script that can manage backups
+        of running VMs with a higher degree of "intelligence" regarding the underlying disk files. To borrow a phrase from a former co-worker, <i>"This is phase one"</i>.
+        For the time being, it gets the job done.
+    </p>
+    <a href="/assets/images/20251003/06.png"><img src="/assets/images/20251003/06.png"></a>
+    <h3 id="restore">restore</h3>
+    <p>
+        I did <i>not</i> write a script for restoring VMs, however the basic commands to do so are fairly straight forward. Sticking with the <b>clone</b> VM which was
+        used in the backup script, the VM is first powered down, then undefined using the command below.
+    </p>
+    <pre>
+        <code>
+virsh undefine clone --remove-all-storage
+        </code>
+    </pre>
+    <a href="/assets/images/20251003/07.png"><img src="/assets/images/20251003/07.png"></a>
+    <p>
+        With the VM undefined and the underlying disk file removed, the previously backed up disk can be "restored" via a simple <b>cp</b>.
+    </p>
+    <pre>
+        <code>
+cp /mnt/backup/clone/20251003-120917/clone.qcow2 /mnt/data/images/
+        </code>
+    </pre>
+    <p>
+        With the disk "restored" to the expected location, the VM is redefined using the XML dump also created via the backup script.
+    </p>
+    <pre>
+        <code>
+virsh define --file "/mnt/backup/clone/20251003-120917/clone.xml"
+virsh list --all
+        </code>
+    </pre>
+    <a href="/assets/images/20251003/08.png"><img src="/assets/images/20251003/08.png"></a>
+</section>
+
+<section>
+    <h2 id="final-thoughts">final thoughts</h2>
+    <p>
+        Thus far, learning KVM seems to have been time well spent. After creating the Almalinux template VM, I placed my first <i>workload</i> VM into service; a
+        simple docker host running a bookstack container. VM performance is on-par with what I had come to expect out of ESXi and I have yet to encounter any
+        strange issues with VM compute, storage, or networking. As mentioned, I <i>do</i> plan on making a more refined backup script. It may or may not be written
+        in Bash, as this would be a good opportunity to dive head-first into Python. That will come in a later post. As for the KVM host itself, there have been no
+        issues to speak of and reboots are <u>significantly</u> faster than ESXi.
+    </p>
+    <p>
+        No one knows what the future holds for VMWare. I built my first vSphere environment in around a decade ago, up until that point, everything I had managed
+        had been a bare-metal Windows Server installation. Watching virtual machines <u>live migrate</u> between hypervisors and shared storage boarded on magic by
+        comparison. VMWare led the virtualization revolution, now they are owned by Broadcom.
+    </p>
+    <p>
+        My big takeaway from the past few years has been <i>"Do not bet your entire career on one technology or vendor"</i>. If you have always specialized in Windows;
+        learn Linux. If you have been ride-or-die VMWare; time to learn Hyper-V... or KVM. The only guarantee is change.
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/20250912.html">2025.09.12-►</a>
+</div>
+
+</div>
+</body>
+</html>

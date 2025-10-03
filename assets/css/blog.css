@@ -124,7 +124,8 @@ img {
 }
 
 li {
-    padding-bottom: 10pt;
+    padding-bottom: 5pt;
+    padding-top: 5pt;
 }
 
 pre {

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>ds8086 | 2025.09.12</title>
+    <title>ds8086 | 2025.10.03</title>
 
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,253 +19,358 @@
 </div>
 
 <div class="pagenav">
-    <a href="#underground">underground</a>
+    <a href="#good-knight">good (k)night</a>
+    <a href="#2025" style="font-size: 12pt;">- 2025</a>
     <a href="#materials" style="font-size: 12pt;">- materials</a>
-    <a href="#setup">setup</a>
-    <a href="#ssh-key" style="font-size: 12pt;">- ssh key</a>
-    <a href="#linux-server" style="font-size: 12pt;">- linux server</a>
-    <a href="#firewall" style="font-size: 12pt;">- firewall</a>
-    <a href="#testing">testing</a>
+    <a href="#kvm">kvm</a>
+    <a href="#disks" style="font-size: 12pt;">- disks</a>
+    <a href="#packages" style="font-size: 12pt;">- packages</a>
+    <a href="#networking" style="font-size: 12pt;">- networking</a>
+    <a href="#storage-pools" style="font-size: 12pt;">- storage pools</a>
+    <a href="#virtual-machines">virtual machines</a>
+    <a href="#template" style="font-size: 12pt;">- template</a>
+    <a href="#cloning" style="font-size: 12pt;">- cloning</a>
+    <a href="#backup" style="font-size: 12pt;">- backup</a>
+    <a href="#restore" style="font-size: 12pt;">- restore</a>
     <a href="#final-thoughts">final thoughts</a>
-    <a href="#server-hardening" style="font-size: 12pt;">- server hardening</a>
-    <a href="#serverless" style="font-size: 12pt;">- serverless</a>
 </div>
 
 <div class="content">
 <section>
-    <h1>2025.09.12</h1>
-    <h2 id="underground">underground</h2>
+    <h1>2025.10.03</h1>
+    <h2 id="good-knight">good (k)night</h2>
     <p>
-        SSH; synonymous with <a href="https://www.inadequacy.org/public/stories/2001.12.2.42056.2147.html" target="_blank">Lunix</a> management but also a viable,
-        lightweight substitute for that bloated VPN client you've been married to since OPNSense forked in 2015. No admin rights? No problem! If you can get tcp/22 out
-        to the internet, you have all that you need.
+        My home lab has long run on ESXi 7 Update 3n. Why <i>this</i> release? For a few reasons... ESXi 7 was the last major release which would run on anything and
+        I do mean <i>anything</i>. At one point I was running it on an Optiplex 7040 small form factor desktop with an ancient i7 and 32GB of RAM. Following 
+        the decommission of my "mini-lab", it went on to power a Precision 7810 Tower which sports a hyperthreaded 10-core Xeon and 128GB of RAM... hard to believe was is
+        marketed as a workstation, amiright?
     </p>
+    <p>
+        Why update 3n though? This update was one of the last releases prior to the 2023 Broadcom acquisition of VMWare. If you are new to IT or the virtualization space,
+        this accquisition was a <u>big</u> deal. The transition was anything but smooth; bookmarked knowledge base articles became dead links, free ESXi was (temporarily)
+        killed off, required downloads became nearly inaccessible, and Horizon was spun off to <a href="https://www.omnissa.com/" target="_blank">omnissa</a>, a company which
+        seemingly no one had heard of. The death of free ESXi was a shock to many sysadmins. It powered home labs, it taught many of us the ways of virtualization,
+        and provided the confidence to support VMWare in our corporate environments. Broadcom eventually started offering free ESXi again, but many had already moved on
+        adopting Proxmox as their home lab hypervisor. I tried Proxmox as well as XCP-NG, neither of which resonated with me, so I accepted the risk associated with running
+        outdated ESXi and moved on with my life...
+    </p>
+    <h3 id="2025">2025</h3>
+    <p>
+        ...Two years later and I find myself still running ESXi 7u3n. <i>Every</i> IT team is now at least <i>considering</i> VMWare alternatives. I have collegues preparing
+        for Hyper-V migrations in 2026. I have talked with multiple teams who are moving to <a href="https://www.nutanix.com/vmware-alternative" target=" _blank"">Nutanix</a>.
+        Meanwhile, Linux admins everywhere continue to say, <i>"Just run KVM"</i>. My lab was in a state of languish, the world had moved on without it. Finding myself
+        with abundant free time and a recent emboldened outlook on Linux, I decided it was time.
+    </p>
+    <p>
+        <i>"Good night, sweet prince, and flights of angels sing thee to thy rest."</i>
+    </p>
+    <a href="/assets/images/20251003/01.png"><img src="/assets/images/20251003/01.png"></a>
     <h3 id="materials">materials</h3>
     <p>
-        For this effort you'll need the following materials.
+        I have already eluded to my lab hardware, but here is the full materials breakdown for this endeavor.
     </p>
     <ul>
-        <li>A minimal Linux server (SSH and little else).</li>
-        <li>A Windows client (accessible via RDP).</li>
-        <li>A router/firewall.</li>
-        <li><a href="https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html" target="_blank">PuTTY</a> (SSH and keygen).</li>
+        <li>
+            Dell Precision 7810 Tower
+            <ul>
+                <li>Intel Xeon E5-2640 v4 (10-core HT @ 2.4GHz)</li>
+                <li style="padding-bottom: 0pt;">128GB ECC RAM</li>
+            </ul>
+        </li>
+        <li>
+            Samsung 850 Evo SSD (500GB)
+            <ul>
+                <li style="padding-bottom: 0pt;">
+                    Older SSD with ~70k hours of service. Almalinux bare-metal install location.
+                </li>
+            </ul>
+        </li>
+        <li>
+            Samsung 870 Evo SSD (500GB)
+            <ul>
+                <li style="padding-bottom: 0pt;">
+                    Newer SSD with ~20k hours of service. VM disk storage.
+                </li>
+            </ul>
+        </li>
+        <li>
+            Western Digital Purple (1TB)
+            <ul>
+                <li style="padding-bottom: 0pt;">
+                    Spinning drive with ~37k hours of service. VM Backups.
+                </li>
+            </ul>
+        </li>
+        <li>Almalinux 9.6 ISO (minimal)</li>
+        <li><a href="https://rufus.ie/en/" target="_blank">Rufus</a></li>
     </ul>
+</section>
+
+<section>
+    <h2 id="kvm">kvm</h2>
     <p>
-        Below is my demo environment where the entirety of the internet exists as <b>10.0.0.0/8</b> (use your imagination).
+        With a keyboard, monitor, and mouse connected to my lab box, I set about the Almalinux minimal installation. As you would expect, it is a well designed GUI
+        installation, I did not bother with screenshots and accepted the defaults for basically everything.
     </p>
-    <table>
-        <tr>
-            <th>Node</th>
-            <th>IP Address</th>
-        </tr>
-        <tr>
-            <td>Router (WAN)</td>
-            <td>10.0.0.1/8</td>
-        </tr>
-        <tr>
-            <td>Router (LAN)</td>
-            <td>192.168.1.1/24</td>
-        </tr>
-        <tr>
-            <td>Linux server</td>
-            <td>192.168.1.10/24</td>
-        </tr>
-        <tr>
-            <td>Windows client</td>
-            <td>192.168.1.11/24</td>
-        </tr>
-        <tr>
-            <td>Corporate egress</td>
-            <td>10.69.4.20/8</td>
-        </tr>
-    </table>
+    <h3 id="disks">disks</h3>
     <p>
-        For the router, I am using a virtual machine running <a href="https://mikrotik.com/download" target="_blank">MikroTik</a> CHR (cloud hosted router) which is
-        free to use without a license, but you are limited to 1Mbps throughput. Great for lab environments and more than enough for this post. The default
-        firewall configuration below should suffice for what a <u>physical</u> MikroTik device would ship with, and it will serve as the starting point.
+        After a bit of fumbling around with <b>gdisk</b> and <b>mkfs</b> commands, I ended up with the disk configuration shown here.
+    </p>
+    <a href="/assets/images/20251003/02.png"><img src="/assets/images/20251003/02.png"></a>
+    <p>
+        A few folders were premptively created in <b>/mnt/</b> for the two additional drives and partitions...
     </p>
     <pre>
         <code>
-/ip firewall filter
-add action=accept chain=input comment="defconf: accept established,related,untracked" connection-state=established,related,untracked
-add action=drop chain=input comment="defconf: drop invalid" connection-state=invalid
-add action=accept chain=input comment="defconf: accept ICMP" in-interface-list=lan protocol=icmp
-add action=accept chain=input comment="defconf: accept to local loopback (for CAPsMAN)" dst-address=127.0.0.1
-add action=accept chain=forward comment="defconf: accept established,related, untracked" connection-state=established,related,untracked
-add action=drop chain=input comment="defconf: drop all not coming from LAN" in-interface-list=!lan
-add action=drop chain=forward comment="defconf: drop invalid" connection-state=invalid
-add action=drop chain=forward comment="defconf: drop all from WAN not DSTNATed" in-interface-list=wan
+mkdir /mnt/data
+mkdir /mnt/backup
+        </code>
+    </pre>
+    <p>
+        ...then the entries below were added to <b>/etc/fstab</b>.
+    </p>
+    <pre>
+        <code>
+# Samsung 870 EVO
+UUID=b0c8c9d9-7083-4fca-9e31-fccb4b08d0b7 /mnt/data     xfs     defaults        0 2
+
+# Western Digital Purple
+UUID=60f52c94-adf1-4871-8b8c-ad6e3551f927 /mnt/backup   ext4    defaults        0 2
+        </code>
+    </pre>
+    <p>
+        A quick reboot and the mounts are up.
+    </p>
+    <a href="/assets/images/20251003/03.png"><img src="/assets/images/20251003/03.png"></a>
+    <p>
+        <b>Tip:</b> Always add <b>/etc/fstab</b> entries using UUID. Linux is not guaranteed to discover devices in the same order on each boot.
+    </p>
+    <h3 id="packages">packages</h3>
+    <p>
+        With storage provisioned, packages can be installed, services configured, and firewall rules added. The code below handles KVM...
+    </p>
+    <pre>
+        <code>
+dnf update
+dnf install qemu-kvm libvirt libguestfs-tools libvirt-client virt-top virt-install -y
+systemctl enable --now libvirtd
+        </code>
+    </pre>
+    <p>
+        ...While this code takes care of cockpit. Hey! ESXi had a GUI so why not have one for KVM as well?
+    </p>
+    <pre>
+        <code>
+dnf install cockpit cockpit-machines cockpit-storaged -y
+systemctl enable --now cockpit.socket
+firewall-cmd --add-service=cockpit --permanent
+firewall-cmd --reload
+        </code>
+    </pre>
+    <h3 id="networking">networking</h3>
+    <p>
+        By default, KVM includes a NAT network. Not a fan. The last thing I want to deal with is a potential double NAT scenario for VMs which will be exposed to my home
+        network. The code below creates a bridge network named <b>br0</b> with my sole physical interface, <b>enp0s25</b> as the only member.
+    </p>
+    <pre>
+        <code>
+nmcli con add ifname br0 type bridge con-name br0
+nmcli con add type bridge-slave ifname enp0s25 master br0
+nmcli con down enp0s25
+nmcli con up br0
+        </code>
+    </pre>
+    <p>
+        With networking sorted on the host, the KVM config must be updated to match. For whatever reason, there is no means to create a bridge network via cockpit so
+        an XML file is created with the content below.
+    </p>
+    <h4>bridge.xml</h4>
+    <pre>
+        <code>
+&#60;network&#62;
+  &#60;name&#62;br0&#60;/name&#62;
+  &#60;forward mode="bridge"/&#62;
+  &#60;bridge name="br0" /&#62;
+&#60;/network&#62;
+        </code>
+    </pre>
+    <p>
+        The <b>virsh</b> commands below create the bridge network and disable the default NAT network. I'm leaving it defined in case I <i>need</i> a NAT network.
+    </p>
+    <pre>
+        <code>
+virsh net-define ./bridge.xml
+virsh net-start br0
+virsh net-autostart br0
+
+virsh net-destroy default
+virsh net-autostart default --disable
+        </code>
+    </pre>
+    <h3 id="storage-pools">storage pools</h3>
+    <p>
+        KVM has a default storage pool named <b>images</b> which points to the <b>/var/lib/libvirt/images</b> directory on the host. I am going to use the directory,
+        but for VM templates rather than running VM images. The <b>virsh</b> commands below remove the storage pool entirely.
+    </p>
+    <pre>
+        <code>
+virsh pool-destroy images
+virsh pool-delete images
+virsh pool-undefine images
+        </code>
+    </pre>
+    <p>
+        With the default storage pool removed, three XML files created to define the new storage pools for KVM.
+    </p>
+    <h4>images.xml</h4>
+    <pre>
+        <code>
+&#60;pool type='dir'&#62;
+  &#60;name&#62;images&#60;/name&#62;
+  &#60;target&#62;
+    &#60;path&#62;/mnt/data/images&#60;/path&#62;
+  &#60;/target&#62;
+&#60;/pool&#62;
+        </code>
+    </pre>
+    <h4>templates.xml</h4>
+    <pre>
+        <code>
+&#60;pool type='dir'&#62;
+  &#60;name&#62;templates&#60;/name&#62;
+  &#60;target&#62;
+    &#60;path&#62;/var/lib/libvirt/templates&#60;/path&#62;
+  &#60;/target&#62;
+&#60;/pool&#62;
+        </code>
+    </pre>
+    <h4>iso.xml</h4>
+    <pre>
+        <code>
+&#60;pool type='dir'&#62;
+  &#60;name&#62;iso&#60;/name&#62;
+  &#60;target&#62;
+    &#60;path&#62;/var/lib/libvirt/iso&#60;/path&#62;
+  &#60;/target&#62;
+&#60;/pool&#62;
+        </code>
+    </pre>
+    <p>
+        The code below ingests the XML files and creates the storage pools.
+    </p>
+    <pre>
+        <code>
+mkdir /mnt/data/images
+mkdir /var/lib/libvirt/templates
+mkdir /var/lib/libvirt/iso
+
+virsh pool-define images.xml
+virsh pool-start images
+virsh pool-autostart images
+
+virsh pool-define templates.xml
+virsh pool-start templates
+virsh pool-autostart templates
+
+virsh pool-define iso.xml
+virsh pool-start iso
+virsh pool-autostart iso
         </code>
     </pre>
 </section>
 
 <section>
-    <h2 id="setup">setup</h2>
-    <h3 id="ssh-key">ssh key</h3>
+    <h2 id="virtual-machines">virtual machines</h2>
     <p>
-        Fire up <b>puttygen.exe</b> and create a new key pair. You should <i>consider</i> using a modern key like EdDSA and you should <u>definitely</u> secure your private
-        key with a password. Once generated, save the private key and copy the public key string to notepad or something similar.
+        If you have used <i>any</i> type 1 or even type 2 hypervisor, creating virtual machines via cockpit will be very intuitive. If not... google it? Fumble around?
+        Figure it out, I believe in you... I'm not covering it here. If you find cockpit lacking for VM creation, other options do exist such as
+        <a href="https://virt-manager.org/download" target="_blank">Virtual Machine Manager (VMM)</a> which will run on any of the popular Linux distros and can be
+        made to run on Windows via the Linux Subsystem.
     </p>
-    <a href="/assets/images/20250912/01.png"><img src="/assets/images/20250912/01.png"></a>
-    <h3 id="linux-server">linux server</h3>
+    <h3 id="template">template</h3>
     <p>
-        SSH into your Linux server and run the code block below either using <b>sudo</b> or the root account. Swap the string within the double-quotes for the public key
-        you copied.
+        The first VM I created (<b>alma96</b>) acts as a template VM with the virtual disk residing in the <b>templates</b> storage pool. The VM is configured with
+        the "baseline" packages I include in all Almalinux powered VMs, fully updated, then powered down.
     </p>
-    <pre>
-        <code>
-adduser -U -m tunnel
-mkdir /home/tunnel/.ssh
-echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGdzKzXHB8YlNf2SghkpuDVQkpnFe7WXjQ7Y3EqJ93Vr tunnel" > /home/tunnel/.ssh/authorized_keys
-        </code>
-    </pre>
+    <a href="/assets/images/20251003/04.png"><img src="/assets/images/20251003/04.png"></a>
+    <h3 id="cloning">cloning</h3>
     <p>
-        Since your Linux server will eventually be exposed to the internet, you should <i>really</i> disable password authentication for SSH. Do so only if you are using
-        key-based authentication for your root/admin account already... or if you are good with using console login for your Linux server. Open the SSH config
-        <b>/etc/ssh/sshd_config</b> in your favorite Linux text editor, and find the <b>PasswordAuthentication</b> line. Ensure it is set to <b>no</b> and <u>not</u>
-        commented out. Save the file if needed, bounce the SSH daemon if there were any changes.
-    </p>
-    <a href="/assets/images/20250912/02.png"><img src="/assets/images/20250912/02.png"></a>
-    <pre>
-        <code>
-systemctl restart sshd
-        </code>
-    </pre>
-    <h3 id="firewall">firewall</h3>
-    <p>
-        For your firewall configuration you <i>should</i> know the source of traffic which will be forwarded. For example, the egress IP address of your corporate network.
-        You should <u>not</u> create a port forward and firewall rule which forwards all traffic from the internet... With that in mind, remember that the "internet" in my
-        example is <b>10.0.0.0/8</b>, the WAN IP address of my MikroTik is <b>10.0.0.1</b> and my corporate egress IP address is <b>10.69.4.20</b>. The NAT and firewall
-        filter rules below will allow SSH traffic from only my corporate egress IP address which will be forwarded to the Linux server.
+        A literal <u>one-liner</u> is used to clone the VM. The parameters are even self-explanatory.
     </p>
     <pre>
         <code>
-/ip firewall nat
-add action=dst-nat chain=dstnat dst-port=22 in-interface-list=wan protocol=tcp src-address=10.69.4.20 to-addresses=192.168.1.10 to-ports=22
-
-/ip firewall filter
-add action=accept chain=forward comment="allow: ssh from office" dst-port=22 in-interface-list=wan protocol=tcp src-address=10.69.4.20 place-before=5
+virt-clone --original alma96 --name clone --file /mnt/data/images/clone.qcow2
+        </code>
+    </pre>
+    <a href="/assets/images/20251003/05.png"><img src="/assets/images/20251003/05.png"></a>
+    <h3 id="backup">backup</h3>
+    <p>
+        When I was running ESXi on this lab box, backups were not really a concern. It's a lab environment and anything worth backing up was handled at the guest OS level.
+        Since I had this Western Digital Purple drive just sitting in a drawer, I figured why not throw it in my lab box and build my own backup script for KVM? As I typed
+        line, I heard a fellow homelab enthusiast in my head; <i>"Proxmox has native VM backups"</i>. I know... but part of this effort is also learning. If I can
+        make bare-bones KVM work, any hypervisor I'm charged with managing should be a breeze, right? Anyway...
+    </p>
+    <p>
+        ...I wrote a <a href="https://github.com/ds8086/Bash/blob/main/kvm/backup-domain.sh" target="_blank">bash script</a> which gracefully powers down and backs up
+        virtual machines. It is crude. Remember folks, I am a Windows engineer by trade. I found that if a VM disk file is created via specifying a storage pool rather
+        than a path, my script cannot deal with it. This script is really more than I was planning to do for this post, long-term I want a script that can manage backups
+        of running VMs with a higher degree of "intelligence" regarding the underlying disk files. To borrow a phrase from a former co-worker, <i>"This is phase one"</i>.
+        For the time being, it gets the job done.
+    </p>
+    <a href="/assets/images/20251003/06.png"><img src="/assets/images/20251003/06.png"></a>
+    <h3 id="restore">restore</h3>
+    <p>
+        I did <i>not</i> write a script for restoring VMs, however the basic commands to do so are fairly straight forward. Sticking with the <b>clone</b> VM which was
+        used in the backup script, the VM is first powered down, then undefined using the command below.
+    </p>
+    <pre>
+        <code>
+virsh undefine clone --remove-all-storage
+        </code>
+    </pre>
+    <a href="/assets/images/20251003/07.png"><img src="/assets/images/20251003/07.png"></a>
+    <p>
+        With the VM undefined and the underlying disk file removed, the previously backed up disk can be "restored" via a simple <b>cp</b>.
+    </p>
+    <pre>
+        <code>
+cp /mnt/backup/clone/20251003-120917/clone.qcow2 /mnt/data/images/
         </code>
     </pre>
     <p>
-        Printing the firewall config shows the newly created firewall rule placed <i>above</i> the three drop rules at the bottom of the default firewall rule list.
+        With the disk "restored" to the expected location, the VM is redefined using the XML dump also created via the backup script.
     </p>
-    <a href="/assets/images/20250912/03.png"><img src="/assets/images/20250912/03.png"></a>
-    <h3 id="putty">putty</h3>
-    <p>
-       Configuring putty is the last setup step with <b>tunnel@10.0.0.1</b> used for the username and IP address.
-    </p>
-    <a href="/assets/images/20250912/04.png"><img src="/assets/images/20250912/04.png"></a>
-    <p>
-        In the <b>Connection > SSH > Auth > Credentials</b> section, the path to the previously saved private key is specified.
-    </p>
-    <a href="/assets/images/20250912/05.png"><img src="/assets/images/20250912/05.png"></a>
-    <p>
-        In the <b>Connection > SSH > Tunnels</b> section, a random port above 1024 is selected for the source port with the destination set to <b>192.168.1.11:3389</b>
-        which is the local IP address of the Windows client and the port for RDP. Both the <b>Local</b> and <b>Auto</b> radio buttons are selected.
-    </p>
-    <a href="/assets/images/20250912/06.png"><img src="/assets/images/20250912/06.png"></a>
-</section>
-
-<section>
-    <h2 id="testing">testing</h2>
-    <p>
-        With putty configured the connection can be opened and the tunnel established.
-    </p>
-    <a href="/assets/images/20250912/07.png"><img src="/assets/images/20250912/07.png"></a>
-    <p>
-        A quick <b>Get-NetTCPConnection</b> confirms that the local machine is listening for connections on the selected port.
-    </p>
-    <a href="/assets/images/20250912/08.png"><img src="/assets/images/20250912/08.png"></a>
-    <p>
-        Launch <b>mstsc</b> specifying the destination as <b>127.0.0.1:42069</b> then enter the password for the Windows client user.
-    </p>
-    <a href="/assets/images/20250912/09.png"><img src="/assets/images/20250912/09.png"></a>
-    <a href="/assets/images/20250912/10.png"><img src="/assets/images/20250912/10.png"></a>
-    <p>
-        As if by magic, RDP traffic is tunneled over the SSH connection to the remote Windows client. Note the lack of default gateway on the Windows client which proves
-        that the RDP connection is undeniably taking place over the SSH tunnel rather than by routing.
-    </p>
-    <a href="/assets/images/20250912/11.png"><img src="/assets/images/20250912/11.png"></a>
+    <pre>
+        <code>
+virsh define --file "/mnt/backup/clone/20251003-120917/clone.xml"
+virsh list --all
+        </code>
+    </pre>
+    <a href="/assets/images/20251003/08.png"><img src="/assets/images/20251003/08.png"></a>
 </section>
 
 <section>
     <h2 id="final-thoughts">final thoughts</h2>
-    <h3 id="server-hardening">server hardening</h3>
     <p>
-        With RDP functional via the SSH tunnel, a good "hardening" measure would be to limit where the <b>tunnel</b> user is <i>allowed</i> to tunnel connections which
-        is easily accomplished via a "per-user" configuration added to <b>/etc/ssh/sshd_config</b>.
-    </p>
-    <pre>
-        <code>
-# Tunnel user
-Match User tunnel
-        PermitOpen 192.168.1.11:3389
-        </code>
-    </pre>
-    <p>
-        To show that the configuration above limits tunneled connections, I updated the <b>putty</b> config to tunnel traffic to <b>192.168.1.12:3389</b> then attempted
-        to RDP to <b>127.0.0.1:42069</b>. The RDP connection fails, but what do the SSH logs from the server say?
-    </p>
-    <pre>
-        <code>
-journalctl -t sshd
-        </code>
-    </pre>
-    <a href="/assets/images/20250912/12.png"><img src="/assets/images/20250912/12.png"></a>
-    <p>
-        Very good. The <b>tunnel</b> user can SSH into the server, but cannot tunnel traffic to a destination other than <b>192.168.1.11:3389</b>. In addition to
-        restricting where traffic can be tunneled, the user can be assigned to the <b>nologin</b> shell via the code below.
-    </p>
-    <pre>
-        <code>
-usermod -s /sbin/nologin tunnel
-        </code>
-    </pre>
-    <p>
-        Now, should the <b>tunnel</b> user attempt to log into the server via the console <i>or</i> SSH, the login will fail. With this in place the PuTTY config must
-        be updated to use the <i>Don't start a shell or command at all</i> protocol option in the <b>Connection > SSH</b> section as shown below.
-    </p>
-    <a href="/assets/images/20250912/13.png"><img src="/assets/images/20250912/13.png"></a>
-    <h3 id="serverless">serverless</h3>
-    <p>
-        <i>"Wait! You could do all of this without a Linux server right?!"</i>
+        Thus far, learning KVM seems to have been time well spent. After creating the Almalinux template VM, I placed my first <i>workload</i> VM into service; a
+        simple docker host running a bookstack container. VM performance is on-par with what I had come to expect out of ESXi and I have yet to encounter any
+        strange issues with VM compute, storage, or networking. As mentioned, I <i>do</i> plan on making a more refined backup script. It may or may not be written
+        in Bash, as this would be a good opportunity to dive head-first into Python. That will come in a later post. As for the KVM host itself, there have been no
+        issues to speak of and reboots are <u>significantly</u> faster than ESXi.
     </p>
     <p>
-        Could you? Yes. <i>Should</i> you? Hey, it's your network... Live your best life! Here is what that setup would look like assuming your are still limiting access
-        to <i>only</i> your corporate egress IP address <b>10.69.4.20</b> in this example. Instead of the NAT and filter rule previously provided, the filter and SSH
-        forwarding config below would be used. Note that the filter rule is using the <b>input</b> chain rather than <b>forward</b>.
-    </p>
-    <pre>
-        <code>
-/ip firewall filter
-add action=accept chain=input comment="allow: ssh from office" dst-port=22 in-interface-list=wan protocol=tcp src-address=10.69.4.20 place-before=5
-
-/ip ssh
-set forwarding-enabled=local
-        </code>
-    </pre>
-    <p>
-        Just as with the Linux server, you <u>really</u> want to create a limited user account for the tunnel, MikroTik ships with a <b>read</b> group which would
-        suffice. Again, like the Linux server, if you are willing to expose your router via SSH, even if access is limited to a single public IP address, you should only
-        allow key authentication and disable password authentication on the router entirely. The <a href="https://help.mikrotik.com/docs/" target="_blank">MikroTik Docs</a>
-        provide all the finer details for user creation and SSH key import if that is really the route you want to go. I am not personally a fan of this method, if I did not
-        have access to a Linux server, I would go Raspberry Pi before opening external SSH to my router.
+        No one knows what the future holds for VMWare. I built my first vSphere environment in around a decade ago, up until that point, everything I had managed
+        had been a bare-metal Windows Server installation. Watching virtual machines <u>live migrate</u> between hypervisors and shared storage boarded on magic by
+        comparison. VMWare led the virtualization revolution, now they are owned by Broadcom.
     </p>
     <p>
-        Regardless of the method selected, beware of people who might care about SSH leaving your corporate network. Your tunnel may collapse.
-    </p>    
-</section>
-
-<section>
-    <h4>2025.09.15 edit</h4>
-    <p>
-        Added <b>nologin</b> shell to hardening config after conversation with JS.
+        My big takeaway from the past few years has been <i>"Do not bet your entire career on one technology or vendor"</i>. If you have always specialized in Windows;
+        learn Linux. If you have been ride-or-die VMWare; time to learn Hyper-V... or KVM. The only guarantee is change.
     </p>
 </section>
 
 <div class="footer">
-    <a href="/blog/20250829.html">2025.08.29-►</a>
+    <a href="/blog/20250912.html">2025.09.12-►</a>
 </div>
 
 </div>
