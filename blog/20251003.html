@@ -33,6 +33,7 @@
     <a href="#backup" style="font-size: 12pt;">- backup</a>
     <a href="#restore" style="font-size: 12pt;">- restore</a>
     <a href="#final-thoughts">final thoughts</a>
+    <a href="#updates">updates</a>
 </div>
 
 <div class="content">
@@ -312,10 +313,10 @@ virt-clone --original alma96 --name clone --file /mnt/data/images/clone.qcow2
     </p>
     <p>
         ...I wrote a <a href="https://github.com/ds8086/Bash/blob/main/kvm/backup-domain.sh" target="_blank">bash script</a> which gracefully powers down and backs up
-        virtual machines. It is crude. Remember folks, I am a Windows engineer by trade. I found that if a VM disk file is created via specifying a storage pool rather
-        than a path, my script cannot deal with it. This script is really more than I was planning to do for this post, long-term I want a script that can manage backups
-        of running VMs with a higher degree of "intelligence" regarding the underlying disk files. To borrow a phrase from a former co-worker, <i>"This is phase one"</i>.
-        For the time being, it gets the job done.
+        virtual machines. It is crude. Remember folks, I am a Windows engineer by trade. <s>I found that if a VM disk file is created via specifying a storage pool rather
+        than a path, my script cannot deal with it</s> (fixed, see <a href="#updates">updates</a>). This script is really more than I was planning to do for this post,
+        long-term I want a script that can manage backups of running VMs with a higher degree of "intelligence" regarding the underlying disk files. To borrow a phrase
+        from a former co-worker, <i>"This is phase one"</i>. For the time being, it gets the job done.
     </p>
     <a href="/assets/images/20251003/06.png"><img src="/assets/images/20251003/06.png"></a>
     <h3 id="restore">restore</h3>
@@ -366,6 +367,13 @@ virsh list --all
     <p>
         My big takeaway from the past few years has been <i>"Do not bet your entire career on one technology or vendor"</i>. If you have always specialized in Windows;
         learn Linux. If you have been ride-or-die VMWare; time to learn Hyper-V... or KVM. The only guarantee is change.
+    </p>
+</section>
+
+<section>
+    <h2 id="updates">updates</h2>
+    <p>
+        <b>2025.10.14: </b>Updated shell backup script to handle disks defined using storage pools.
     </p>
 </section>
 
