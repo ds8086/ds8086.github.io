@@ -312,7 +312,7 @@ virt-clone --original alma96 --name clone --file /mnt/data/images/clone.qcow2
         make bare-bones KVM work, any hypervisor I'm charged with managing should be a breeze, right? Anyway...
     </p>
     <p>
-        ...I wrote a <a href="https://github.com/ds8086/Bash/blob/main/kvm/backup-domain.sh" target="_blank">bash script</a> which gracefully powers down and backs up
+        ...I wrote a <a href="https://github.com/ds8086/Bash/blob/main/kvm/backup-domain_v1.sh" target="_blank">bash script</a> which gracefully powers down and backs up
         virtual machines. It is crude. Remember folks, I am a Windows engineer by trade. <s>I found that if a VM disk file is created via specifying a storage pool rather
         than a path, my script cannot deal with it</s> (fixed, see <a href="#updates">updates</a>). This script is really more than I was planning to do for this post,
         long-term I want a script that can manage backups of running VMs with a higher degree of "intelligence" regarding the underlying disk files. To borrow a phrase
@@ -374,6 +374,8 @@ virsh list --all
     <h2 id="updates">updates</h2>
     <p>
         <b>2025.10.14: </b>Updated shell backup script to handle disks defined using storage pools.
+        <br>
+        <b>2025.10.15: </b>Updated script name to 'v1' and link to match. v2 coming soon...
     </p>
 </section>
 
