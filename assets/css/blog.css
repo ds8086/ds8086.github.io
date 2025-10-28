@@ -1,3 +1,27 @@
+.blog-table table {
+    border: none;
+    padding: 0px;
+    border-collapse: collapse;
+}
+.blog-table tr {
+    border: none;
+    padding: 0px;
+    border-collapse: collapse;
+}
+.blog-table td {
+    border: none;
+    padding: 0px;
+    padding-bottom: 20px;
+    padding-right: 20px;
+    border-collapse: collapse;
+}
+.blog-table th {
+    border: none;
+    padding: 0px;
+    border-collapse: collapse;
+}
+
+
 .index-container {
     display:flexbox;
     justify-content: center;
