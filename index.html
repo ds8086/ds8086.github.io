@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>ds8086 | 2025.10.29</title>
+    <title>ds8086 | 2025.10.20</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="keywords" content="dnf, linux, reposync">
+    <meta name="keywords" content="kvm, linux, vnc">
     <link rel="stylesheet" href="/assets/css/blog.css">
 </head>
 
@@ -18,100 +18,82 @@
 </div>
 
 <div class="pagenav">
-    <a href="#mirror-2">mirror^2</a>
-    <a href="#repotrack" style="font-size: 12pt;">- repotrack</a>
-    <a href="#new-repo" style="font-size: 12pt;">- new repo</a>
-    <a href="#space" style="font-size: 12pt;">- space</a>
+    <a href="#console">console</a>
+    <a href="#error" style="font-size: 12pt;">- error</a>
+    <a href="#firewall" style="font-size: 12pt;">- firewall</a>
+    <a href="#vncdisplay" style="font-size: 12pt;">- vncdisplay</a>
+    <a href="#confirmation" style="font-size: 12pt;">- confirmation</a>
 </div>
 
 <div class="content">
 <section>
-    <h1>2025.10.29</h1>
-    <h2>mirror^2</h2>
+    <h1>2025.10.20</h1>
+    <h2 id="console">console</h2>
     <p>
-        Today, a quick update on my <a href="/blog/20251024.html" target="_blank">last post</a>; I found a means to selectively include packages in a local repository.
-        The solution is not as clean as I would like, but it works. To start, the <b>createrepo</b> package is required in order to manually update repo metadata
-        once additional packages are added <i>to</i> the repo.
+        Since recently migrating my home lab from ESXi to KVM, I have been using the VNC console built into Cockpit for initial configuration of domains. It works... but
+        only just. You will frequently find yourself fighting with resolution changes for domains running a GUI or text which runs beyond the display limits for those
+        without. ESXi has VMWare Remote Console, KVM <i>should</i> have something similar, right? Enter <b>Virt Viewer</b> available for download from
+        <a href="https://virt-manager.org/download.html">virt-manager.org</a>.
+    </p>
+    <a href="/assets/images/20251020/01.png"><img src="/assets/images/20251020/01.png"></a>
+    <h3 id="error">error</h3>
+    <p>
+        After installing <b>Virt Viewer</b> on my local Windows 11 box, I tried the Remote Viewer option. No dice...
+    </p>
+    <a href="/assets/images/20251020/02.png"><img src="/assets/images/20251020/02.png"></a>
+    <a href="/assets/images/20251020/03.png"><img src="/assets/images/20251020/03.png"></a>
+    <h3 id="firewall">firewall</h3>
+    <p>
+        When VNC is enabled for a domain, the KVM host starts with <b>5900/tcp</b> for connections to the first domain, and increments ports by one for each additional
+        domain thereafter. Armed with this information, I ran the code below adding <b>5900-5909/tcp</b> to the ports allowed through the firewall.
     </p>
     <pre>
         <code>
-dnf install createrepo
-        </code>
-    </pre>
-    <h3 id="repotrack">repotrack</h3>
-    <p>
-        The <b>repotrack</b> utility, which is included with <b>yum-utils</b>, can be used to download packages and their dependencies. I compiled a short list of
-        packages installed on Almalinux machines in my home lab and put the list in a file aptly named <b>packages.txt</b>. The code below is used to download the packages
-        and all dependencies into the directory used by the previously implemented <b>reposync</b> process, then update the repo metadata.
-    </p>
-    <pre>
-        <code>
-#!/bin/bash
-
-reposync --destdir /var/www/repos/almalinux/9/x86_64/os --repo=baseos --newest-only --exclude=*.i686
-repotrack --destdir /var/www/repos/almalinux/9/x86_64/os/baseos/Packages $(cat packages.txt)
-createrepo /var/www/repos/almalinux/9/x86_64/os/baseos --update
+firewall-cmd --zone=public --add-ports=5900-5909/tcp --permanent
+firewall-cmd --reload
         </code>
     </pre>
     <p>
-        I put the code above into script file named <b>reposync.sh</b> and updated <b>crontab</b> to just execute the script.
+        A quick sanity check shows the KVM host <i>is</i> making a connection on <b>5902/tcp</b>, but despite the additional firewall rule, Remote Viewer remains
+        nonfunctional.
     </p>
-    <h3 id="new-repo">new repo</h3>
+    <a href="/assets/images/20251020/04.png"><img src="/assets/images/20251020/04.png"></a>
+    <h3 id="vncdisplay">vncdisplay</h3>
     <p>
-        On the servers which will make use of the local mirror, I reverted <b>/etc/yum.repos.d/almalinux-baseos.repo</b> to its original state and created a new repo
-        by means of a <i>new</i> config file; <b>/etc/yum.repos.d/almalinux-lan.repo</b> with the contents below.
+        Running the <b>vncdisplay</b> subcommand in <b>virsh</b> shows that VNC connections are expected on <b>127.0.0.1:2</b>... This is misleading. The KVM host
+        is <u>NOT</u> expecting a connection on <b>2/tcp</b> for VNC, instead it is using port 5900 + 2 (<b>5902/tcp</b>).
     </p>
-    <pre>
-        <code>
-[lan]
-name=AlmaLinux $releasever - LAN
-baseurl=http://mirror.ds.lan/almalinux/$releasever/x86_64/os/baseos
-enabled=1
-gpgcheck=1
-priority=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-9
-        </code>
-    </pre>
+    <a href="/assets/images/20251020/05.png"><img src="/assets/images/20251020/05.png"></a>
     <p>
-        As a test, I attempted to install Nginx on a server where it is not present. With the new <b>lan</b> repo configured with the highest priority, it is checked
-        first and the package along with its dependencies are listed and available for install.
+        The issue here is actually the <b>127.0.0.1</b> address. I found a blog post online saying this needs to be <b>0.0.0.0</b>. No <i>actual</i> explanation
+        was provided, just... update this address and it works. So what does that process look like? Start by powering down the domain, then edit the domain config
+        using <b>virsh edit $domain</b>. Find the <b>graphics type</b> element and change the two <b>127.0.0.1</b> entries to <b>0.0.0.0</b>, then save the file.
     </p>
-    <a href="/assets/images/20251029/01.png"><img src="/assets/images/20251029/01.png"></a>
-    <h3 id="space">space</h3>
+    <a href="/assets/images/20251020/06.png"><img src="/assets/images/20251020/06.png"></a>
     <p>
-        So how much space is required for my local mirror now that it contains both the Base OS and my short list of packages from Appstream? Well first how about a look
-        at the list of packages I am currently installing from Appstream.
+        Next up, open <b>/etc/libvirt/qemu.conf</b> in vi(m), then uncomment the <b>vnc_listen</b> line. Save the file and bounce the <b>libvirtd</b> daemon.
     </p>
-    <pre>
-        <code>
-cockpit
-cockpit-machines
-cockpit-storaged
-createrepo
-libguestfs-tools
-libvirt
-libvirt-client
-nginx
-qemu-guest-agent
-qemu-kvm
-vim-enhanced
-virt-install
-virt-top
-yum-utils
-        </code>
-    </pre>
+    <a href="/assets/images/20251020/10.png"><img src="/assets/images/20251020/10.png"></a>
+    <h3 id="confirmation">confirmation</h3>
     <p>
-        Less than 2GB, I can live with that.
+        Start up the domain and re-run the <b>vncdisplay</b> command. Output will display <b>:num</b>.
     </p>
-    <a href="/assets/images/20251029/02.png"><img src="/assets/images/20251029/02.png"></a>
+    <a href="/assets/images/20251020/07.png"><img src="/assets/images/20251020/07.png"></a>
     <p>
-        Honestly, it could probably be slimmed down even further by cutting the language packs and some of the other Base OS fluff, but I doubt those packages are updated
-        often enough to make an impact. They are already there, they can stay.
+        Back in cockpit, the <i>Manual connection</i> information now displays <b>0.0.0.0</b> rather than <b>127.0.0.1</b>...
+    </p>
+    <a href="/assets/images/20251020/08.png"><img src="/assets/images/20251020/08.png"></a>
+    <p>
+        ...and launching the remote viewer is now successful.
+    </p>
+    <a href="/assets/images/20251020/09.png"><img src="/assets/images/20251020/09.png"></a>
+    <p>
+        Suppose I could uninstall VMWare Remote Console now, eh?
     </p>
 </section>
 
 <div class="footer">
-    <a href="/blog/20251024.html">2025.10.24-►</a>
+    <a href="/blog/20251017.html">2025.10.17-►</a>
 </div>
 
 </div>
