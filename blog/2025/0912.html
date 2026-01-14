@@ -106,7 +106,7 @@ add action=drop chain=forward comment="defconf: drop all from WAN not DSTNATed" 
         Fire up <b>puttygen.exe</b> and create a new key pair. You should <i>consider</i> using a modern key like EdDSA and you should <u>definitely</u> secure your private
         key with a password. Once generated, save the private key and copy the public key string to notepad or something similar.
     </p>
-    <a href="/assets/images/20250912/01.png"><img src="/assets/images/20250912/01.png"></a>
+    <a href="/assets/images/2025/0912/01.png"><img src="/assets/images/2025/0912/01.png"></a>
     <h3 id="linux-server">linux server</h3>
     <p>
         SSH into your Linux server and run the code block below either using <b>sudo</b> or the root account. Swap the string within the double-quotes for the public key
@@ -125,7 +125,7 @@ echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGdzKzXHB8YlNf2SghkpuDVQkpnFe7WXjQ7Y3E
         <b>/etc/ssh/sshd_config</b> in your favorite Linux text editor, and find the <b>PasswordAuthentication</b> line. Ensure it is set to <b>no</b> and <u>not</u>
         commented out. Save the file if needed, bounce the SSH daemon if there were any changes.
     </p>
-    <a href="/assets/images/20250912/02.png"><img src="/assets/images/20250912/02.png"></a>
+    <a href="/assets/images/2025/0912/02.png"><img src="/assets/images/2025/0912/02.png"></a>
     <pre>
         <code>
 systemctl restart sshd
@@ -150,21 +150,21 @@ add action=accept chain=forward comment="allow: ssh from office" dst-port=22 in-
     <p>
         Printing the firewall config shows the newly created firewall rule placed <i>above</i> the three drop rules at the bottom of the default firewall rule list.
     </p>
-    <a href="/assets/images/20250912/03.png"><img src="/assets/images/20250912/03.png"></a>
+    <a href="/assets/images/2025/0912/03.png"><img src="/assets/images/2025/0912/03.png"></a>
     <h3 id="putty">putty</h3>
     <p>
        Configuring putty is the last setup step with <b>tunnel@10.0.0.1</b> used for the username and IP address.
     </p>
-    <a href="/assets/images/20250912/04.png"><img src="/assets/images/20250912/04.png"></a>
+    <a href="/assets/images/2025/0912/04.png"><img src="/assets/images/2025/0912/04.png"></a>
     <p>
         In the <b>Connection > SSH > Auth > Credentials</b> section, the path to the previously saved private key is specified.
     </p>
-    <a href="/assets/images/20250912/05.png"><img src="/assets/images/20250912/05.png"></a>
+    <a href="/assets/images/2025/0912/05.png"><img src="/assets/images/2025/0912/05.png"></a>
     <p>
         In the <b>Connection > SSH > Tunnels</b> section, a random port above 1024 is selected for the source port with the destination set to <b>192.168.1.11:3389</b>
         which is the local IP address of the Windows client and the port for RDP. Both the <b>Local</b> and <b>Auto</b> radio buttons are selected.
     </p>
-    <a href="/assets/images/20250912/06.png"><img src="/assets/images/20250912/06.png"></a>
+    <a href="/assets/images/2025/0912/06.png"><img src="/assets/images/2025/0912/06.png"></a>
 </section>
 
 <section>
@@ -172,21 +172,21 @@ add action=accept chain=forward comment="allow: ssh from office" dst-port=22 in-
     <p>
         With putty configured the connection can be opened and the tunnel established.
     </p>
-    <a href="/assets/images/20250912/07.png"><img src="/assets/images/20250912/07.png"></a>
+    <a href="/assets/images/2025/0912/07.png"><img src="/assets/images/2025/0912/07.png"></a>
     <p>
         A quick <b>Get-NetTCPConnection</b> confirms that the local machine is listening for connections on the selected port.
     </p>
-    <a href="/assets/images/20250912/08.png"><img src="/assets/images/20250912/08.png"></a>
+    <a href="/assets/images/2025/0912/08.png"><img src="/assets/images/2025/0912/08.png"></a>
     <p>
         Launch <b>mstsc</b> specifying the destination as <b>127.0.0.1:42069</b> then enter the password for the Windows client user.
     </p>
-    <a href="/assets/images/20250912/09.png"><img src="/assets/images/20250912/09.png"></a>
-    <a href="/assets/images/20250912/10.png"><img src="/assets/images/20250912/10.png"></a>
+    <a href="/assets/images/2025/0912/09.png"><img src="/assets/images/2025/0912/09.png"></a>
+    <a href="/assets/images/2025/0912/10.png"><img src="/assets/images/2025/0912/10.png"></a>
     <p>
         As if by magic, RDP traffic is tunneled over the SSH connection to the remote Windows client. Note the lack of default gateway on the Windows client which proves
         that the RDP connection is undeniably taking place over the SSH tunnel rather than by routing.
     </p>
-    <a href="/assets/images/20250912/11.png"><img src="/assets/images/20250912/11.png"></a>
+    <a href="/assets/images/2025/0912/11.png"><img src="/assets/images/2025/0912/11.png"></a>
 </section>
 
 <section>
@@ -212,7 +212,7 @@ Match User tunnel
 journalctl -t sshd
         </code>
     </pre>
-    <a href="/assets/images/20250912/12.png"><img src="/assets/images/20250912/12.png"></a>
+    <a href="/assets/images/2025/0912/12.png"><img src="/assets/images/2025/0912/12.png"></a>
     <p>
         Very good. The <b>tunnel</b> user can SSH into the server, but cannot tunnel traffic to a destination other than <b>192.168.1.11:3389</b>. In addition to
         restricting where traffic can be tunneled, the user can be assigned to the <b>nologin</b> shell via the code below.
@@ -226,7 +226,7 @@ usermod -s /sbin/nologin tunnel
         Now, should the <b>tunnel</b> user attempt to log into the server via the console <i>or</i> SSH, the login will fail. With this in place the PuTTY config must
         be updated to use the <i>Don't start a shell or command at all</i> protocol option in the <b>Connection > SSH</b> section as shown below.
     </p>
-    <a href="/assets/images/20250912/13.png"><img src="/assets/images/20250912/13.png"></a>
+    <a href="/assets/images/2025/0912/13.png"><img src="/assets/images/2025/0912/13.png"></a>
     <h3 id="serverless">serverless</h3>
     <p>
         <i>"Wait! You could do all of this without a Linux server right?!"</i>
@@ -265,7 +265,7 @@ set forwarding-enabled=local
 </section>
 
 <div class="footer">
-    <a href="/blog/20251003.html">◄-2025.10.03</a><b>...</b><a href="/blog/20250829.html">2025.08.29-►</a>
+    <a href="/blog/2025/1003.html">◄-2025.10.03</a><b>...</b><a href="/blog/2025/0829.html">2025.08.29-►</a>
 </div>
 
 </div>

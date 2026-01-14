@@ -37,7 +37,7 @@
     <h1>2025.08.22</h1>
     <h2 id="tina-ii">tina II</h2>
     <p>
-        In my <a href="/blog/20250811.html" target="_blank">last post</a> I provisioned a Debian powered Active Directory forest. Why? Because why not? A quick recap
+        In my <a href="/blog/2025/0811.html" target="_blank">last post</a> I provisioned a Debian powered Active Directory forest. Why? Because why not? A quick recap
         of the AD environment; the entire forest/domain (<b>ad.lab.local</b>) is currently supported by a single domain controller (<b>dc01</b>). I had put together
         a short hit list of <i>next steps</i> for the environment which are reiterated and expanded upon below.
     </p>
@@ -89,7 +89,7 @@ chmod 750 /var/lib/samba/ntp_signd/
     <p>
         A quick check making sure permissions match the documentation confirms that everything is in order.
     </p>
-    <a href="/assets/images/20250822/01.png"><img src="/assets/images/20250822/01.png"></a>
+    <a href="/assets/images/2025/0822/01.png"><img src="/assets/images/2025/0822/01.png"></a>
     <p>
         The <b>/etc/chrony/chrony.conf</b> file is updated with the info below.
     </p>
@@ -143,7 +143,7 @@ systemctl restart chrony
     <p>
         The service started without issue and checking the Windows 7 domain member, I confirmed that it is successfully syncing time from <b>dc01</b>.
     </p>
-    <a href="/assets/images/20250822/02.png"><img src="/assets/images/20250822/02.png"></a>
+    <a href="/assets/images/2025/0822/02.png"><img src="/assets/images/2025/0822/02.png"></a>
     <h3 id="group-policy">group policy</h3>
     <p>
         Just as with NTP, Group Policy has its own <a href="https://wiki.samba.org/index.php/Group_Policy" target="_blank">documentation</a> on the SambaWiki.
@@ -172,16 +172,16 @@ New-SmbShare -FullAccess Everyone -Path C:\Share -Name Share
         A GPO which maps a network drive is quintessential Active Directory. Day one, <i>hour one</i>, this will be a task for your newly provisioned AD environment.
         Remember kids, this is a lab environment. Do not link drive mapping GPOs to the domain root in your production environment.
     </p>
-    <a href="/assets/images/20250822/03.png"><img src="/assets/images/20250822/03.png"></a>
+    <a href="/assets/images/2025/0822/03.png"><img src="/assets/images/2025/0822/03.png"></a>
     <p>
         Already being logged into a Windows domain member, the all-too-familiar <b>gpupdate /force</b> followed by <b>gpresult</b> shows that the newly minted GPO is
         being applied.
     </p>
-    <a href="/assets/images/20250822/04.png"><img src="/assets/images/20250822/04.png"></a>
+    <a href="/assets/images/2025/0822/04.png"><img src="/assets/images/2025/0822/04.png"></a>
     <p>
         Which is confirmed by launching explorer.
     </p>
-    <a href="/assets/images/20250822/05.png"><img src="/assets/images/20250822/05.png"></a>
+    <a href="/assets/images/2025/0822/05.png"><img src="/assets/images/2025/0822/05.png"></a>
 </section>
 
 <section>
@@ -226,7 +226,7 @@ kinit administrator
 klist
         </code>
     </pre>
-    <a href="/assets/images/20250822/06.png"><img src="/assets/images/20250822/06.png"></a>
+    <a href="/assets/images/2025/0822/06.png"><img src="/assets/images/2025/0822/06.png"></a>
     <p>
         The <b>/etc/chrony/chrony.conf</b> config must be updated to use <b>dc01</b> as a time source via the content below.
     </p>
@@ -278,7 +278,7 @@ rm /etc/samba/smb.conf
 samba-tool domain join ad.lab.local DC -U "AD\administrator"
         </code>
     </pre>
-    <a href="/assets/images/20250822/07.png"><img src="/assets/images/20250822/07.png"></a>
+    <a href="/assets/images/2025/0822/07.png"><img src="/assets/images/2025/0822/07.png"></a>
     <p>
         References to <i>replication</i> and lots of green text. That seems good. Can <b>samba</b> be started?
     </p>
@@ -291,15 +291,15 @@ systemctl status samba
     <p>
         ...no. 
     </p>
-    <a href="/assets/images/20250822/08.png"><img src="/assets/images/20250822/08.png"></a>
+    <a href="/assets/images/2025/0822/08.png"><img src="/assets/images/2025/0822/08.png"></a>
     <p>
         How about after a quick <b>reboot</b>?
     </p>
-    <a href="/assets/images/20250822/09.png"><img src="/assets/images/20250822/09.png"></a>
+    <a href="/assets/images/2025/0822/09.png"><img src="/assets/images/2025/0822/09.png"></a>
     <p>
         Yes! <b>\o/</b> Looking at the latest log entries does seem to indicate an issue with registering DNS records though.
     </p>
-    <a href="/assets/images/20250822/10.png"><img src="/assets/images/20250822/10.png"></a>
+    <a href="/assets/images/2025/0822/10.png"><img src="/assets/images/2025/0822/10.png"></a>
     <p>
         The <a href="https://wiki.samba.org/index.php/Joining_a_Samba_DC_to_an_Existing_Active_Directory#Verifying_the_DNS_Entries" target="blank">documentation</a>
         does mention that after starting <b>samba</b>, the DC should be updated to use <i>itself</i> for DNS resolution. Easy fix, the <b>/etc/resolv.conf</b> file
@@ -401,7 +401,7 @@ systemctl enable rsync
 systemctl status rsync
         </code>
     </pre>
-    <a href="/assets/images/20250822/11.png"><img src="/assets/images/20250822/11.png"></a>
+    <a href="/assets/images/2025/0822/11.png"><img src="/assets/images/2025/0822/11.png"></a>
     <p>
         On to the second DC. <b>\o/</b>
     </p>
@@ -429,11 +429,11 @@ rsync --dry-run -XAavz --delete-after --password-file=/usr/local/samba/etc/rsync
     <p>
         No errors from the dry run.
     </p>
-    <a href="/assets/images/20250822/12.png"><img src="/assets/images/20250822/12.png"></a>
+    <a href="/assets/images/2025/0822/12.png"><img src="/assets/images/2025/0822/12.png"></a>
     <p>
         The recent log entries on <b>dc01</b> provide additional confirmation.
     </p>
-    <a href="/assets/images/20250822/13.png"><img src="/assets/images/20250822/13.png"></a>
+    <a href="/assets/images/2025/0822/13.png"><img src="/assets/images/2025/0822/13.png"></a>
     <p>
         In the words of Captain Pike; <i>"Punch it!"</i>
     </p>
@@ -445,7 +445,7 @@ rsync -XAavz --delete-after --password-file=/usr/local/samba/etc/rsync-sysvol.se
     <p>
         Checking the Group Policy Management console shows that <b>dc02</b> is in sync! <b>\o/</b>
     </p>
-    <a href="/assets/images/20250822/14.png"><img src="/assets/images/20250822/14.png"></a>
+    <a href="/assets/images/2025/0822/14.png"><img src="/assets/images/2025/0822/14.png"></a>
     <h3 id="rsync-cron">rsync (cron)</h3>
     <p>
        The last step in setting up <b>rsync</b> is to automate the SysVol "replication". No need to over complicate things, <b>cron</b> can handle this.
@@ -467,19 +467,19 @@ crontab -e
     <p>
         While waiting, I created an empty GPO for validating SysVol replication. Immediately following GPO creation, <b>dc02</b> is listed as <i>replication in progress</i>.
     </p>
-    <a href="/assets/images/20250822/15.png"><img src="/assets/images/20250822/15.png"></a>
+    <a href="/assets/images/2025/0822/15.png"><img src="/assets/images/2025/0822/15.png"></a>
     <p>
         A few minutes later, the <b>cron</b> logs on <b>dc02</b> indicate success...
     </p>
-    <a href="/assets/images/20250822/16.png"><img src="/assets/images/20250822/16.png"></a>
+    <a href="/assets/images/2025/0822/16.png"><img src="/assets/images/2025/0822/16.png"></a>
     <p>
         ...the <b>rsync</b> logs on <b>dc01</b> confirm replication has occured via the <b>cron</b> job...
     </p>
-    <a href="/assets/images/20250822/17.png"><img src="/assets/images/20250822/17.png"></a>
+    <a href="/assets/images/2025/0822/17.png"><img src="/assets/images/2025/0822/17.png"></a>
     <p>
         ...and <b>dc02</b> is once again listed as <i>replication in sync</i>. <b>\o/</b>
     </p>
-    <a href="/assets/images/20250822/18.png"><img src="/assets/images/20250822/18.png"></a>
+    <a href="/assets/images/2025/0822/18.png"><img src="/assets/images/2025/0822/18.png"></a>
 </section>
 
 <section>
@@ -491,7 +491,7 @@ crontab -e
 </section>
 
 <div class="footer">
-    <a href="/blog/20250829.html">◄-2025.08.29</a><b>...</b><a href="/blog/20250811.html">2025.08.11-►</a>
+    <a href="/blog/2025/0829.html">◄-2025.08.29</a><b>...</b><a href="/blog/2025/0811.html">2025.08.11-►</a>
 </div>
 
 </div>

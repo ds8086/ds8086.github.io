@@ -35,7 +35,7 @@
     <h1>2025.07.14</h1>
     <h2 id="exchange-se">exchange se</h2>
     <p>
-        As mentioned in my <a href="/blog/20250714.html">previous post</a>, as of October 2025, Exchange SE will be the only supported version of on-premises Exchange. This
+        As mentioned in my <a href="/blog/2025/0714.html">previous post</a>, as of October 2025, Exchange SE will be the only supported version of on-premises Exchange. This
         is somewhat reminiscent of claims that <i>"Windows 10 will be the 'last' incremented version of Windows."</i>. What happened there? I digress. This post will run
         through the process of upgrading my previously created Exchange 2019 DAG to Exchange SE. As a quick recap, Exchange 2019 CU14 is currently installed on two servers
         (<b>ex01</b> and <b>ex02</b>) and using these two servers a DAG (<b>dag01</b>) was created. Each server is currently active for the mailbox database which was created
@@ -48,7 +48,7 @@ Get-MailboxDatabase | Select Name,Server,ReplicationType,ActivationPreference
 'ex01','ex02' | % { Get-MailboxDatabaseCopyStatus -Server $_ } | Sort Name | Select Name,Status,*Length
         </code>
     </pre>
-    <a href="/assets/images/20250714/01.png"><img src="/assets/images/20250714/01.png"></a>
+    <a href="/assets/images/2025/0714/01.png"><img src="/assets/images/2025/0714/01.png"></a>
     <h3 id="plan">plan</h3>
     <p>
         Right, so what's the plan? Following the official
@@ -111,7 +111,7 @@ Set-ServerComponentState $env:ComputerName -Component ServerWideOffline -State I
 Get-ServerComponentState $env:ComputerName | Format-Table Component,State -Autosize
         </code>
     </pre>
-    <a href="/assets/images/20250714/02.png"><img src="/assets/images/20250714/02.png"></a>
+    <a href="/assets/images/2025/0714/02.png"><img src="/assets/images/2025/0714/02.png"></a>
     <p>
         Verify the server is not hosting any active database copies.
     </p>
@@ -120,7 +120,7 @@ Get-ServerComponentState $env:ComputerName | Format-Table Component,State -Autos
 Get-MailboxServer $env:ComputerName | Format-List DatabaseCopyAutoActivationPolicy
         </code>
     </pre>
-    <a href="/assets/images/20250714/03.png"><img src="/assets/images/20250714/03.png"></a>
+    <a href="/assets/images/2025/0714/03.png"><img src="/assets/images/2025/0714/03.png"></a>
     <p>
         Ensure the cluster node is paused.
     </p>
@@ -129,7 +129,7 @@ Get-MailboxServer $env:ComputerName | Format-List DatabaseCopyAutoActivationPoli
 Get-ClusterNode $env:ComputerName | Format-List
         </code>
     </pre>
-    <a href="/assets/images/20250714/04.png"><img src="/assets/images/20250714/04.png"></a>
+    <a href="/assets/images/2025/0714/04.png"><img src="/assets/images/2025/0714/04.png"></a>
     <p>
         Finally, verify all transport queues have been emptied. Anything with a <b>count</b> value should be <b>0</b>.
     </p>
@@ -138,7 +138,7 @@ Get-ClusterNode $env:ComputerName | Format-List
 Get-Queue | Format-List *
         </code>
     </pre>
-    <a href="/assets/images/20250714/05.png"><img src="/assets/images/20250714/05.png"></a>
+    <a href="/assets/images/2025/0714/05.png"><img src="/assets/images/2025/0714/05.png"></a>
 </section>
 
 <section>
@@ -162,7 +162,7 @@ $sw
     <p>
         About an hour later the upgrade is complete.
     </p>
-    <a href="/assets/images/20250714/06.png"><img src="/assets/images/20250714/06.png"></a>
+    <a href="/assets/images/2025/0714/06.png"><img src="/assets/images/2025/0714/06.png"></a>
 </section>
 
 <section>
@@ -202,7 +202,7 @@ Restart-Service MSExchangeTransport
 Get-ServerComponentState $env:ComputerName | Format-Table Component,State -Autosize
         </code>
     </pre>
-    <a href="/assets/images/20250714/07.png"><img src="/assets/images/20250714/07.png"></a>
+    <a href="/assets/images/2025/0714/07.png"><img src="/assets/images/2025/0714/07.png"></a>
     <p>
         Redistribute active database copies among DAG members according to activation preference.
     </p>
@@ -211,7 +211,7 @@ Get-ServerComponentState $env:ComputerName | Format-Table Component,State -Autos
 & $exscripts\RedistributeActiveDatabases.ps1 -DagName dag01 -BalanceDbsByActivationPreference
         </code>
     </pre>
-    <a href="/assets/images/20250714/08.png"><img src="/assets/images/20250714/08.png"></a>
+    <a href="/assets/images/2025/0714/08.png"><img src="/assets/images/2025/0714/08.png"></a>
     <p>
         Send test email and use OWA to verify both the receipt of it and the functionality of CAS roles.
     </p>
@@ -231,7 +231,7 @@ Send-MailMessage @Mail
     <p>
         I'll call that a successful upgrade.
     </p>
-    <a href="/assets/images/20250714/09.png"><img src="/assets/images/20250714/09.png"></a>
+    <a href="/assets/images/2025/0714/09.png"><img src="/assets/images/2025/0714/09.png"></a>
 </section>
 
 <section>
@@ -266,7 +266,7 @@ Get-Service -DisplayName *pop*,*imap* | Start-Service
 </div>
 
 <div class="footer">
-    <a href="/blog/20250804.html">◄-2025.08.04</a><b>...</b><a href="/blog/20250711.html">2025.07.11-►</a>
+    <a href="/blog/2025/0804.html">◄-2025.08.04</a><b>...</b><a href="/blog/2025/0711.html">2025.07.11-►</a>
 </div>
 
 </body>

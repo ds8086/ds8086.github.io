@@ -79,7 +79,7 @@ Install-WindowsFeature -Name RSAT-ADDS-Tools
 D:\Setup.exe /IAcceptExchangeServerLicenseTerms_DiagnosticDataOff /PrepareAD /OrganizationName:"Lab"
         </code>
     </pre>
-    <a href="/assets/images/20250711/01.png"><img src="/assets/images/20250711/01.png"></a>
+    <a href="/assets/images/2025/0711/01.png"><img src="/assets/images/2025/0711/01.png"></a>
 </section>
 
 <section>
@@ -89,7 +89,7 @@ D:\Setup.exe /IAcceptExchangeServerLicenseTerms_DiagnosticDataOff /PrepareAD /Or
         during the installation. I placed the Visual C++ Redistributable installers and the URL Rewrite Module installer in <b>C:\prereq\</b> as shown below and the Exchange 2019
         iso is mounted as <b>D:\</b> on what will become the first Exchange server in the environment; <b>ex01</b>.
     </p>
-    <a href="/assets/images/20250711/02.png"><img src="/assets/images/20250711/02.png"></a>
+    <a href="/assets/images/2025/0711/02.png"><img src="/assets/images/2025/0711/02.png"></a>
     <p>
         This script will do <i>everything</i> in the order required. All installers fire off in passive mode. Why? Because what is life without progress (bars)? Once  past the
         prerequisites analysis it <i>should</i> should be safe to step away for lunch.
@@ -123,7 +123,7 @@ $sw
     <p>
         Look at that; Exchange installed in under an hour.
     </p>
-    <a href="/assets/images/20250711/03.png"><img src="/assets/images/20250711/03.png"></a>
+    <a href="/assets/images/2025/0711/03.png"><img src="/assets/images/2025/0711/03.png"></a>
     <p>
         The same exact process and script is used to install Exchange 2019 on <b>ex02</b>. Before doing that, how about a quick check to make sure mail is actually flowing.
         Running the script below from <b>ex01</b> will send an email to the built-in Administrator mailbox, create and connect to a PS session for Exchange management, and
@@ -153,15 +153,15 @@ Get-MessageTrackingLog -Sender 'cats@lab.local'
     <p>
         It <i>seems</i> like mail is flowing...
     </p>
-    <a href="/assets/images/20250711/04.png"><img src="/assets/images/20250711/04.png"></a>
+    <a href="/assets/images/2025/0711/04.png"><img src="/assets/images/2025/0711/04.png"></a>
     <p>
         ...which is confirmed via OWA.
     </p>
-    <a href="/assets/images/20250711/05.png"><img src="/assets/images/20250711/05.png"></a>
+    <a href="/assets/images/2025/0711/05.png"><img src="/assets/images/2025/0711/05.png"></a>
     <p>
         Another hour yields another Exchange server and it's time to make a DAG.
     </p>
-    <a href="/assets/images/20250711/06.png"><img src="/assets/images/20250711/06.png"></a>
+    <a href="/assets/images/2025/0711/06.png"><img src="/assets/images/2025/0711/06.png"></a>
 </section>
 
 <section>
@@ -215,7 +215,7 @@ Set-Acl -AclObject $ACL -Path $dag
     <p>
         Permissions are present now to actually <i>make</i> the DAG...
     </p>
-    <a href="/assets/images/20250711/07.png"><img src="/assets/images/20250711/07.png"></a>
+    <a href="/assets/images/2025/0711/07.png"><img src="/assets/images/2025/0711/07.png"></a>
     <h3 id="dag-creation">dag creation</h3>
     <p>
         ...after just <i>one more</i> prerequisite. The AD group <b>Exchange Trusted Subsystem</b> must be a member of the local administrators group on <b>fs01</b> in order
@@ -227,7 +227,7 @@ Add-LocalGroupMember -Group 'administrators' -Member 'lab\Exchange Trusted Subsy
 Get-LocalGroupMember -Group 'administrators'
         </code>
     </pre>
-    <a href="/assets/images/20250711/08.png"><img src="/assets/images/20250711/08.png"></a>
+    <a href="/assets/images/2025/0711/08.png"><img src="/assets/images/2025/0711/08.png"></a>
     <p>
         <u>Now</u> the DAG can be created. The code below is executed on <b>ex01</b> it will create the DAG, add the server to it, and bounce the Exchange Information Store
         process, which is required after adding a mailbox server to a DAG.
@@ -239,7 +239,7 @@ Add-DatabaseAvailabilityGroupServer -Identity dag01 -MailboxServer ex01
 Get-Service -DisplayName 'Microsoft Exchange Information Store' | Restart-Service
         </code>
     </pre>
-    <a href="/assets/images/20250711/09.png"><img src="/assets/images/20250711/09.png"></a>
+    <a href="/assets/images/2025/0711/09.png"><img src="/assets/images/2025/0711/09.png"></a>
     <p>
         As expected, the code below is then executed to add <b>ex02</b> to the DAG.
     </p>
@@ -266,7 +266,7 @@ Restart-Service -Name MSExchangeIS
 Invoke-Command -ComputerName ex02 { Restart-Service -Name MSExchangeIS }
         </code>
     </pre>
-    <a href="/assets/images/20250711/10.png"><img src="/assets/images/20250711/10.png"></a>
+    <a href="/assets/images/2025/0711/10.png"><img src="/assets/images/2025/0711/10.png"></a>
     <p>
         Just a <i>bit</i> more code... The block below sets the datacenter activation for and then starts the DAG.
     </p>
@@ -285,7 +285,7 @@ Start-DatabaseAvailabilityGroup -Identity dag01 -ActiveDirectorySite 'Default-Fi
 </div>
 
 <div class="footer">
-    <a href="/blog/20250714.html">◄-2025.07.14</a><b>...</b><a href="/blog/20250702.html">2025.07.02-►</a>
+    <a href="/blog/2025/0714.html">◄-2025.07.14</a><b>...</b><a href="/blog/2025/0702.html">2025.07.02-►</a>
 </div>
 
 </body>

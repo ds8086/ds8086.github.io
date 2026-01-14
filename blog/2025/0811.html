@@ -154,7 +154,7 @@ sudo apt-get update -y
 sudo apt-get install vim -y
         </code>
     </pre>
-    <a href="/assets/images/20250811/01.png"><img src="/assets/images/20250811/01.png"></a>
+    <a href="/assets/images/2025/0811/01.png"><img src="/assets/images/2025/0811/01.png"></a>
     <p>
         Whoa... it does not include the packages required for <b>sudo</b>. Now <i>that's</i> minimal! This will be fun.
     </p>
@@ -184,11 +184,11 @@ vim /etc/network/interfaces
     <p>
         <b>Before</b>
     </p>
-    <a href="/assets/images/20250811/02.png"><img src="/assets/images/20250811/02.png"></a>
+    <a href="/assets/images/2025/0811/02.png"><img src="/assets/images/2025/0811/02.png"></a>
     <p>
         <b>After</b>
     </p>
-    <a href="/assets/images/20250811/03.png"><img src="/assets/images/20250811/03.png"></a>
+    <a href="/assets/images/2025/0811/03.png"><img src="/assets/images/2025/0811/03.png"></a>
     <p>
         The networking service must be bounced following the change.
         <br>
@@ -241,7 +241,7 @@ rm /etc/samba/smb.conf
 samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL --realm=AD.LAB.LOCAL --domain=AD --adminpass=P@ssw0rd!
         </code>
     </pre>
-    <a href="/assets/images/20250811/04.png"><img src="/assets/images/20250811/04.png"></a>
+    <a href="/assets/images/2025/0811/04.png"><img src="/assets/images/2025/0811/04.png"></a>
     <p>
         A wall of mostly green text would seem to indicate success. Next, the DNS resolver config needs updating as well. With nothing worthy of backup, slam two
         lines into the file and move on with life.
@@ -295,7 +295,7 @@ host -t A dc01.ad.lab.local
 host -t PTR 192.168.1.10
         </code>
     </pre>
-    <a href="/assets/images/20250811/05.png"><img src="/assets/images/20250811/05.png"></a>
+    <a href="/assets/images/2025/0811/05.png"><img src="/assets/images/2025/0811/05.png"></a>
     <p>
         Each query gave an answer, that seems good. What about Kerberos, does it work?
     </p>
@@ -304,7 +304,7 @@ host -t PTR 192.168.1.10
 kinit administrator
         </code>
     </pre>
-    <a href="/assets/images/20250811/06.png"><img src="/assets/images/20250811/06.png"></a>
+    <a href="/assets/images/2025/0811/06.png"><img src="/assets/images/2025/0811/06.png"></a>
     <p>
         If I am being told when my password expires I <i>must</i> be successfully authenticated, but let's list Kerberos tickets.
     </p>
@@ -313,7 +313,7 @@ kinit administrator
 klist
         </code>
     </pre>
-    <a href="/assets/images/20250811/07.png"><img src="/assets/images/20250811/07.png"></a>
+    <a href="/assets/images/2025/0811/07.png"><img src="/assets/images/2025/0811/07.png"></a>
     <p>
         We have a functional Active Directory domain controller! <b>\o/</b>
     </p>
@@ -325,7 +325,7 @@ klist
         Now to verify that a desktop OS can join the newly minted domain. Since the forest functionality level for this implementation is Server 2008r2, how about
         a <i>period authentic</i> desktop? Arguably one of the last great desktop operating systems from Microsoft; Windows 7 SP1.
     </p>
-    <a href="/assets/images/20250811/08.png"><img src="/assets/images/20250811/08.png"></a>
+    <a href="/assets/images/2025/0811/08.png"><img src="/assets/images/2025/0811/08.png"></a>
     <p>
         <b>&lt;rant&gt;</b>
         <br>
@@ -343,7 +343,7 @@ klist
         <br>
         <b>&lt;/rant&gt;</b>
     </p>
-    <a href="/assets/images/20250811/09.png"><img src="/assets/images/20250811/09.png"></a>
+    <a href="/assets/images/2025/0811/09.png"><img src="/assets/images/2025/0811/09.png"></a>
     <p>
         It was also able to join the domain. <b>\o/</b>
     </p>
@@ -355,32 +355,32 @@ klist
         In addition to the fine vintage of Windows 7, I wanted to ensure that a modern OS could join the domain. For those of you who have not memorized the <b>win32</b>
         operating system class version numbers, I selected Windows Server 2022, which also joined the domain without issue.
     </p>
-    <a href="/assets/images/20250811/10.png"><img src="/assets/images/20250811/10.png"></a>
+    <a href="/assets/images/2025/0811/10.png"><img src="/assets/images/2025/0811/10.png"></a>
     <p>
         With a few RSAT management tools installed, let's see what this Windows server has to say about the domain it has just joined.
     </p>
-    <a href="/assets/images/20250811/11.png"><img src="/assets/images/20250811/11.png"></a>
+    <a href="/assets/images/2025/0811/11.png"><img src="/assets/images/2025/0811/11.png"></a>
     <p>
         Ah, the PowerShell module does not work. I suppose this <i>would</i> be expecting a lot given the circumstances. Remember, this domain is running what is largely
         considered bootleg Active Directory. All is not lost though, the tried and true <b>ds*</b> commands such as <b>dsquery</b> are functional so you would
         <i>technically</i> have programmatic management capabilities. Prepare to visit <a href="https://ss64.com/nt/" target="_blank">ss64.com</a> more frequently.
     </p>
-    <a href="/assets/images/20250811/12.png"><img src="/assets/images/20250811/12.png"></a>
+    <a href="/assets/images/2025/0811/12.png"><img src="/assets/images/2025/0811/12.png"></a>
     <p>
         In all reality, if you were to implement Linux powered Active Directory, it would (hopefully) be at a very small scale where management would likely take place via
         a GUI. The Active Directory Users and Computers snap-in is exactly what you would expect and accurately shows both the desktop and the server domain members.
     </p>
-    <a href="/assets/images/20250811/13.png"><img src="/assets/images/20250811/13.png"></a>
+    <a href="/assets/images/2025/0811/13.png"><img src="/assets/images/2025/0811/13.png"></a>
     <p>
         There it is. In all of its strange and not yet fully understood splendor, the Debian powered domain controller.
     </p>
-    <a href="/assets/images/20250811/14.png"><img src="/assets/images/20250811/14.png"></a>
+    <a href="/assets/images/2025/0811/14.png"><img src="/assets/images/2025/0811/14.png"></a>
     <p>
         A quick look in DNS provides a familiar sight with the expected AD integrated forward lookup zone, created during the domain provisioning process as well as the
         reverse lookup zone which was created later on. Both <b>ws01</b> and <b>srv01</b> have dynamically updated their corresponding DNS records just as you would expect.
-        If you read my <a href="/blog/20250804.html" target="_blank">previous post</a>, you should be able to explain both how and why.
+        If you read my <a href="/blog/2025/0804.html" target="_blank">previous post</a>, you should be able to explain both how and why.
     </p>
-    <a href="/assets/images/20250811/15.png"><img src="/assets/images/20250811/15.png"></a>
+    <a href="/assets/images/2025/0811/15.png"><img src="/assets/images/2025/0811/15.png"></a>
 </section>
 
 <section>
@@ -402,7 +402,7 @@ klist
 </section>
 
 <div class="footer">
-    <a href="/blog/20250822.html">◄-2025.08.22</a><b>...</b><a href="/blog/20250804.html">2025.08.04-►</a>
+    <a href="/blog/2025/0822.html">◄-2025.08.22</a><b>...</b><a href="/blog/2025/0804.html">2025.08.04-►</a>
 </div>
 
 </div>

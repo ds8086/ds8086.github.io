@@ -30,7 +30,7 @@
     <h1>2025.05.19</h1>
     <h2 id="data-governance">data governance</h2>
     <p>
-        I had <a href="/blog/20250516.html">posted previously</a> on the topic of organizing AD in a way to make assigning admin rights on domain member servers easier. If you've
+        I had <a href="/blog/2025/0516.html">posted previously</a> on the topic of organizing AD in a way to make assigning admin rights on domain member servers easier. If you've
         yet to read that post, you should, but in summary the OU hierarchy for servers starts by defining the teams which require admin rights <i>on</i> servers and uses those
         team names as the "top-most" point of differentiation across all servers, as shown in the abbreviated example below.
     </p>
@@ -100,25 +100,25 @@ ad.lab.local
     <p>
         Launch Microsoft management console (mmc).      
     </p>
-    <a href="/assets/images/20250519/01.png"><img src="/assets/images/20250519/01.png"></a>
+    <a href="/assets/images/2025/0519/01.png"><img src="/assets/images/2025/0519/01.png"></a>
     <p>
         Strike <b>ctrl + m</b> on your keyboard, select <i>Active Directory Schema</i> from the list of available snap-ins. Click <b>Add ></b>, followed by <b>OK</b>.
     </p>
-    <a href="/assets/images/20250519/02.png"><img src="/assets/images/20250519/02.png"></a>
+    <a href="/assets/images/2025/0519/02.png"><img src="/assets/images/2025/0519/02.png"></a>
     <p>
         Expand <i>Active Directory Schema</i>, right-click on <i>Attributes</i> and select <b>Create Attribute...</b>
     </p>
-    <a href="/assets/images/20250519/03.png"><img src="/assets/images/20250519/03.png"></a>
+    <a href="/assets/images/2025/0519/03.png"><img src="/assets/images/2025/0519/03.png"></a>
     <p>
         Heed this warning; The attribute you create will exist in AD forever. Click <b>Continue</b>.
     </p>
-    <a href="/assets/images/20250519/04.png"><img src="/assets/images/20250519/04.png"></a>
+    <a href="/assets/images/2025/0519/04.png"><img src="/assets/images/2025/0519/04.png"></a>
     <p>
         Fill in the <i>Common Name</i> and <i>Unique X500 Object ID</i> (OID) fields. The <i>LDAP Display Name</i> will automatically generate. You can use
         <a href="https://github.com/ds8086/PowerShell/blob/main/ActiveDirectory/New-X500ObjectId.ps1" target="_blank">this script</a> for generating X500 OIDs.
         Fill in the description field as you see fit. For the Syntax, select <i>Distinguished Name</i> then click <b>OK</b>.
     </p>
-    <a href="/assets/images/20250519/05.png"><img src="/assets/images/20250519/05.png"></a>
+    <a href="/assets/images/2025/0519/05.png"><img src="/assets/images/2025/0519/05.png"></a>
     <p>
         Create the <b>DataSteward</b> and <b>DataCustodian</b> using the same method.
     </p>
@@ -130,19 +130,19 @@ ad.lab.local
         With the new AD attributes created, they must now be associated with the computer class in the schema. Click on <b>classes</b> under the
         Active Directory Schema, then in the right-most pane, locate and open the properties for the Computer class by double-clicking on it.
     </p>
-    <a href="/assets/images/20250519/06.png"><img src="/assets/images/20250519/06.png"></a>
+    <a href="/assets/images/2025/0519/06.png"><img src="/assets/images/2025/0519/06.png"></a>
     <p>
         From the <i>Attributes</i> tab, click <b>Add...</b>
     </p>
-    <a href="/assets/images/20250519/07.png"><img src="/assets/images/20250519/07.png"></a>
+    <a href="/assets/images/2025/0519/07.png"><img src="/assets/images/2025/0519/07.png"></a>
     <p>
         Add each of the newly created attributes by highlighting them (one at a time), clicking <b>OK</b> after each.
     </p>
-    <a href="/assets/images/20250519/08.png"><img src="/assets/images/20250519/08.png"></a>
+    <a href="/assets/images/2025/0519/08.png"><img src="/assets/images/2025/0519/08.png"></a>
     <p>
         With the three attributes added. Click <b>Apply</b> and close the computer properties window.
     </p>
-    <a href="/assets/images/20250519/09.png"><img src="/assets/images/20250519/09.png"></a>
+    <a href="/assets/images/2025/0519/09.png"><img src="/assets/images/2025/0519/09.png"></a>
 </section>
 
 <section>
@@ -178,7 +178,7 @@ Set-ADComputer -Identity $c -Add @{
         will be reflected <i>in</i> the attribute value either by showing the deleted objects container in the value DistinguishedName or by showing the SID of the
         <i>former</i> object if it has already been purged, or if the AD recycle bin feature is not enabled.
     </p>
-    <a href="/assets/images/20250519/10.png"><img src="/assets/images/20250519/10.png"></a>
+    <a href="/assets/images/2025/0519/10.png"><img src="/assets/images/2025/0519/10.png"></a>
     <p>
         So you have tracked down all parties involved in data governance for the servers in your environment, attributes have been created, associated with computer
         objects, and populated appropriately... <i>Now what?</i> Well, the next time audit asks for any data governance information regarding the servers, you know
@@ -193,7 +193,7 @@ Set-ADComputer -Identity $c -Add @{
 </div>
 
 <div class="footer">
-    <a href="/blog/20250702.html">◄-2025.07.02</a><b>...</b><a href="/blog/20250516.html">2025.05.16-►</a>
+    <a href="/blog/2025/0702.html">◄-2025.07.02</a><b>...</b><a href="/blog/2025/0516.html">2025.05.16-►</a>
 </div>
 
 </body>

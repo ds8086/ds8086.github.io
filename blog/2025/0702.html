@@ -72,13 +72,13 @@
         <br>
         They were and the domain controllers were associated with the correct sites. Good start.
     </p>
-    <a href="/assets/images/20250702/01.png"><img src="/assets/images/20250702/01.png"></a>
+    <a href="/assets/images/2025/0702/01.png"><img src="/assets/images/2025/0702/01.png"></a>
     <p>
         <i>How about the Inter-Site Transports? Are links defined properly where site connectivity exists?</i>
         <br>
         Only <b>DEFAULTSITELINK</b> exists and the sites associated with it are those with domain controllers. Problem.
     </p>
-    <a href="/assets/images/20250702/02.png"><img src="/assets/images/20250702/02.png"></a>
+    <a href="/assets/images/2025/0702/02.png"><img src="/assets/images/2025/0702/02.png"></a>
 </section>
 
 <section>
@@ -88,13 +88,13 @@
         <br>
         One namespace and folders within, easy enough.
     </p>
-    <a href="/assets/images/20250702/03.png"><img src="/assets/images/20250702/03.png"></a>
+    <a href="/assets/images/2025/0702/03.png"><img src="/assets/images/2025/0702/03.png"></a>
     <p>
         <i>What about the folder targets, and how are they accessed?</i>
         <br>
         The Reno office only accesses the <b>reno</b> DFS folder target. Similarly, the Vegas office only accesses the <b>vegas</b> DFS folder target.
     </p>
-    <a href="/assets/images/20250702/04.png"><img src="/assets/images/20250702/04.png"></a>
+    <a href="/assets/images/2025/0702/04.png"><img src="/assets/images/2025/0702/04.png"></a>
 </section>
 
 <section>
@@ -105,14 +105,14 @@
         on <b>fs02</b> would be first priority among all targets. Now this <i>only</i> works because of the use case presented here. If for some reason users in Reno were
         accessing the <b>vegas</b> DFS folder target, they would likely complain that doing so is slow.
     </p>
-    <a href="/assets/images/20250702/05.png"><img src="/assets/images/20250702/05.png"></a>
-    <a href="/assets/images/20250702/06.png"><img src="/assets/images/20250702/06.png"></a>
+    <a href="/assets/images/2025/0702/05.png"><img src="/assets/images/2025/0702/05.png"></a>
+    <a href="/assets/images/2025/0702/06.png"><img src="/assets/images/2025/0702/06.png"></a>
     <p>
         Time to test. I dropped my Windows 11 client on the Reno network and accessed the <b>vegas</b> DFS folder target. As expected, the folder was served from <b>fs02</b>,
         the file server in Vegas even though <b>fs01</b> which exists in the same site and subnet as the client also has this folder target configured in an enabled state.
         Run <b>dfsutil.exe /pktflush</b> any number of times and the folder target remains on the same server so long as it is available.
     </p>
-    <a href="/assets/images/20250702/07.png"><img src="/assets/images/20250702/07.png"></a>
+    <a href="/assets/images/2025/0702/07.png"><img src="/assets/images/2025/0702/07.png"></a>
 </section>
 
 <section>
@@ -154,7 +154,7 @@
         then removed the <b>DEFAULTSITELINK</b>. Below is what the IP Inter-Site Transport configuration looks like now. Following this change DFS namespaces and folder
         targets are served just as Bill Gates intended;  based upon the "cost" of getting <i>to</i> the file server.
     </p>
-    <a href="/assets/images/20250702/08.png"><img src="/assets/images/20250702/08.png"></a>
+    <a href="/assets/images/2025/0702/08.png"><img src="/assets/images/2025/0702/08.png"></a>
     <p>
         <i>Wait... how do you configure cost for OneDrive?</i>
         <br>
@@ -164,7 +164,7 @@
 </div>
 
 <div class="footer">
-    <a href="/blog/20250711.html">◄-2025.07.11</a><b>...</b><a href="/blog/20250519.html">2025.05.19-►</a>
+    <a href="/blog/2025/0711.html">◄-2025.07.11</a><b>...</b><a href="/blog/2025/0519.html">2025.05.19-►</a>
 </div>
 
 </body>

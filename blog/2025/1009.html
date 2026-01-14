@@ -31,7 +31,7 @@
     <h1>2025.10.09</h1>
     <h2 id="homeless">homeless</h2>
     <p>
-        If you read my <a href="/blog/20251003.html" target="_blank">previous post</a>, you will recall that I am now running KVM for my home lab hypervisor. If you have
+        If you read my <a href="/blog/2025/1003.html" target="_blank">previous post</a>, you will recall that I am now running KVM for my home lab hypervisor. If you have
         an eye for detail, you will have noticed that I ended up with a <b>/home</b> logical volume. You might be wondering why I decided on this LVM scheme for my new
         KVM box. The simplest explanation is often correct; I erred. While configuring partitions my clicking about led to the volume's creation which I did not notice
         until <i>after</i> the OS installation completed.
@@ -58,7 +58,7 @@ df -h
         This operation will be considered a success if the <b>home</b> volume is no longer present and the 50G currently allocated to it has been added to the <b>root</b>
         volume.
     </p>
-    <a href="/assets/images/20251009/01.png"><img src="/assets/images/20251009/01.png"></a>
+    <a href="/assets/images/2025/1009/01.png"><img src="/assets/images/2025/1009/01.png"></a>
     <pre>
         <code>
 lsblk -f /dev/sda
@@ -67,7 +67,7 @@ lsblk -f /dev/sda
     <p>
         The <b>root</b> volume is configured with an <b>xfs</b> file system, that will be relevant later.
     </p>
-    <a href="/assets/images/20251009/02.png"><img src="/assets/images/20251009/02.png"></a>
+    <a href="/assets/images/2025/1009/02.png"><img src="/assets/images/2025/1009/02.png"></a>
     <pre>
         <code>
 lvdisplay /dev/mapper/almalinux_kvm-home
@@ -76,7 +76,7 @@ lvdisplay /dev/mapper/almalinux_kvm-home
     <p>
         The volume path is <b>/dev/almalinux_kvm/home</b>, which will also be needed in a bit.
     </p>
-    <a href="/assets/images/20251009/03.png"><img src="/assets/images/20251009/03.png"></a>
+    <a href="/assets/images/2025/1009/03.png"><img src="/assets/images/2025/1009/03.png"></a>
     <h3 id="copy-umount">copy & umount</h3>
     <p>
         The <b>/home</b> directory is copied to <b>/tmp</b> for later restoration and <b>/home</b> is unmounted.
@@ -97,7 +97,7 @@ lvremove /dev/mapper/almalinux_kvm-home -y
 vgs -v
         </code>
     </pre>
-    <a href="/assets/images/20251009/04.png"><img src="/assets/images/20251009/04.png"></a>
+    <a href="/assets/images/2025/1009/04.png"><img src="/assets/images/2025/1009/04.png"></a>
     <h3 id="extend">extend</h3>
     <p>
         The code below will extend the <b>root</b> logical volume and grow the file system.
@@ -108,12 +108,12 @@ lvextend -l +100%FREE /dev/mapper/almalinux_kvm-root
 xfs_growfs /dev/mapper/almalinux_kvm-root
         </code>
     </pre>
-    <a href="/assets/images/20251009/05.png"><img src="/assets/images/20251009/05.png"></a>
+    <a href="/assets/images/2025/1009/05.png"><img src="/assets/images/2025/1009/05.png"></a>
     <h3 id="fstab">fstab</h3>
     <p>
         The <b>/etc/fstab</b> config must be updated. Commenting out the <b>/home</b> mount line will suffice.
     </p>
-    <a href="/assets/images/20251009/06.png"><img src="/assets/images/20251009/06.png"></a>
+    <a href="/assets/images/2025/1009/06.png"><img src="/assets/images/2025/1009/06.png"></a>
     <h3 id="final-steps">final steps</h3>
     <p>
         The <b>/home</b> directory can be moved back to <b>/</b>.
@@ -131,7 +131,7 @@ mv -f /tmp/home /
 </section>
 
 <div class="footer">
-    <a href="/blog/20251017.html">◄-2025.10.17</a><b>...</b><a href="/blog/20251003.html">2025.10.03-►</a>
+    <a href="/blog/2025/1017.html">◄-2025.10.17</a><b>...</b><a href="/blog/2025/1003.html">2025.10.03-►</a>
 </div>
 
 </div>

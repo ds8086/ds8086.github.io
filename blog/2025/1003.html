@@ -64,7 +64,7 @@
     <p>
         <i>"Good night, sweet prince, and flights of angels sing thee to thy rest."</i>
     </p>
-    <a href="/assets/images/20251003/01.png"><img src="/assets/images/20251003/01.png"></a>
+    <a href="/assets/images/2025/1003/01.png"><img src="/assets/images/2025/1003/01.png"></a>
     <h3 id="materials">materials</h3>
     <p>
         I have already eluded to my lab hardware, but here is the full materials breakdown for this endeavor.
@@ -116,7 +116,7 @@
     <p>
         After a bit of fumbling around with <b>gdisk</b> and <b>mkfs</b> commands, I ended up with the disk configuration shown here.
     </p>
-    <a href="/assets/images/20251003/02.png"><img src="/assets/images/20251003/02.png"></a>
+    <a href="/assets/images/2025/1003/02.png"><img src="/assets/images/2025/1003/02.png"></a>
     <p>
         A few folders were premptively created in <b>/mnt/</b> for the two additional drives and partitions...
     </p>
@@ -141,7 +141,7 @@ UUID=60f52c94-adf1-4871-8b8c-ad6e3551f927 /mnt/backup   ext4    defaults        
     <p>
         A quick reboot and the mounts are up.
     </p>
-    <a href="/assets/images/20251003/03.png"><img src="/assets/images/20251003/03.png"></a>
+    <a href="/assets/images/2025/1003/03.png"><img src="/assets/images/2025/1003/03.png"></a>
     <p>
         <b>Tip:</b> Always add <b>/etc/fstab</b> entries using UUID. Linux is not guaranteed to discover devices in the same order on each boot.
     </p>
@@ -292,7 +292,7 @@ virsh pool-autostart iso
         The first VM I created (<b>alma96</b>) acts as a template VM with the virtual disk residing in the <b>templates</b> storage pool. The VM is configured with
         the "baseline" packages I include in all Almalinux powered VMs, fully updated, then powered down.
     </p>
-    <a href="/assets/images/20251003/04.png"><img src="/assets/images/20251003/04.png"></a>
+    <a href="/assets/images/2025/1003/04.png"><img src="/assets/images/2025/1003/04.png"></a>
     <h3 id="cloning">cloning</h3>
     <p>
         A literal <u>one-liner</u> is used to clone the VM. The parameters are even self-explanatory.
@@ -302,7 +302,7 @@ virsh pool-autostart iso
 virt-clone --original alma96 --name clone --file /mnt/data/images/clone.qcow2
         </code>
     </pre>
-    <a href="/assets/images/20251003/05.png"><img src="/assets/images/20251003/05.png"></a>
+    <a href="/assets/images/2025/1003/05.png"><img src="/assets/images/2025/1003/05.png"></a>
     <h3 id="backup">backup</h3>
     <p>
         When I was running ESXi on this lab box, backups were not really a concern. It's a lab environment and anything worth backing up was handled at the guest OS level.
@@ -317,7 +317,7 @@ virt-clone --original alma96 --name clone --file /mnt/data/images/clone.qcow2
         long-term I want a script that can manage backups of running VMs with a higher degree of "intelligence" regarding the underlying disk files. To borrow a phrase
         from a former co-worker, <i>"This is phase one"</i>. For the time being, it gets the job done.
     </p>
-    <a href="/assets/images/20251003/06.png"><img src="/assets/images/20251003/06.png"></a>
+    <a href="/assets/images/2025/1003/06.png"><img src="/assets/images/2025/1003/06.png"></a>
     <h3 id="restore">restore</h3>
     <p>
         I did <i>not</i> write a script for restoring VMs, however the basic commands to do so are fairly straight forward. Sticking with the <b>clone</b> VM which was
@@ -328,7 +328,7 @@ virt-clone --original alma96 --name clone --file /mnt/data/images/clone.qcow2
 virsh undefine clone --remove-all-storage
         </code>
     </pre>
-    <a href="/assets/images/20251003/07.png"><img src="/assets/images/20251003/07.png"></a>
+    <a href="/assets/images/2025/1003/07.png"><img src="/assets/images/2025/1003/07.png"></a>
     <p>
         With the VM undefined and the underlying disk file removed, the previously backed up disk can be "restored" via a simple <b>cp</b>.
     </p>
@@ -346,7 +346,7 @@ virsh define --file "/mnt/backup/clone/20251003-120917/clone.xml"
 virsh list --all
         </code>
     </pre>
-    <a href="/assets/images/20251003/08.png"><img src="/assets/images/20251003/08.png"></a>
+    <a href="/assets/images/2025/1003/08.png"><img src="/assets/images/2025/1003/08.png"></a>
 </section>
 
 <section>
@@ -379,7 +379,7 @@ virsh list --all
 </section>
 
 <div class="footer">
-    <a href="/blog/20251009.html">◄-2025.10.09</a><b>...</b><a href="/blog/20250912.html">2025.09.12-►</a>
+    <a href="/blog/2025/1009.html">◄-2025.10.09</a><b>...</b><a href="/blog/2025/0912.html">2025.09.12-►</a>
 </div>
 
 </div>

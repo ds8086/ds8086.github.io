@@ -105,7 +105,7 @@
 Install-WindowsFeature dhcp,dns -IncludeManagementTools
         </code>
     </pre>
-    <a href="/assets/images/20250804/01.png"><img src="/assets/images/20250804/01.png"></a>
+    <a href="/assets/images/2025/0804/01.png"><img src="/assets/images/2025/0804/01.png"></a>
     <h3 id="dns">dns</h3>
     <p>
         With the role installed, the DNS server is configured via the PowerShell code below using only the "close" DC for forwarded DNS queries. Root hints are
@@ -117,7 +117,7 @@ Set-DnsServerForwarder -UseRootHint:$false -IPAddress 192.168.1.10
 Get-DnsServerForwarder
         </code>
     </pre>
-    <a href="/assets/images/20250804/02.png"><img src="/assets/images/20250804/02.png"></a>
+    <a href="/assets/images/2025/0804/02.png"><img src="/assets/images/2025/0804/02.png"></a>
     <h3 id="dhcp">dhcp</h3>
     <p>
         DHCP is then configured using the PowerShell code below. The registry entry will forcibly "complete" the DHCP post-installation configuration.
@@ -146,26 +146,26 @@ Set-DhcpServerv4OptionValue -ScopeId 192.168.3.0 -OptionId 6 -Value '192.168.3.1
     <p>
         Starting with a fresh installation of Windows 11, I confirmed that the client receives a DHCP lease from the stand-alone server. Good start.
     </p>
-    <a href="/assets/images/20250804/03.png"><img src="/assets/images/20250804/03.png"></a>
+    <a href="/assets/images/2025/0804/03.png"><img src="/assets/images/2025/0804/03.png"></a>
     <p>
         Now, this desktop has yet to join the <b>lab.local</b> domain, so registering the DNS client should <i>not</i> succeed...
     </p>
-    <a href="/assets/images/20250804/04.png"><img src="/assets/images/20250804/04.png"></a>
+    <a href="/assets/images/2025/0804/04.png"><img src="/assets/images/2025/0804/04.png"></a>
     <p>
         ...Which does not.
     </p>
-    <a href="/assets/images/20250804/05.png"><img src="/assets/images/20250804/05.png"></a>
+    <a href="/assets/images/2025/0804/05.png"><img src="/assets/images/2025/0804/05.png"></a>
     <h3 id="domain-joined">domain joined</h3>
     <p>
         The desktop should be able to join the domain, which it can.
     </p>
-    <a href="/assets/images/20250804/06.png"><img src="/assets/images/20250804/06.png"></a>
+    <a href="/assets/images/2025/0804/06.png"><img src="/assets/images/2025/0804/06.png"></a>
     <p>
         The now domain-joined desktop should successfully register its DNS client in the <b>lab.local</b> zone, which it also can.
     </p>
-    <a href="/assets/images/20250804/07.png"><img src="/assets/images/20250804/07.png"></a>
+    <a href="/assets/images/2025/0804/07.png"><img src="/assets/images/2025/0804/07.png"></a>
     <br>
-    <a href="/assets/images/20250804/08.png"><img src="/assets/images/20250804/08.png"></a>
+    <a href="/assets/images/2025/0804/08.png"><img src="/assets/images/2025/0804/08.png"></a>
 </section>
 
 <section>
@@ -185,12 +185,12 @@ Set-DhcpServerv4OptionValue -ScopeId 192.168.3.0 -OptionId 6 -Value '192.168.3.1
         that it is sending the dynamic update to a server that can actually <i>do</i> something with it. Once <b>ws03</b> has the SOA information, it is
         likely sending the dynamic update directly <i>to</i> the SOA, which in this case is <b>dc01.lab.local</b>. But why speculate when you can <u>know</u>.
     </p>
-    <a href="/assets/images/20250804/09.png"><img src="/assets/images/20250804/09.png"></a>
+    <a href="/assets/images/2025/0804/09.png"><img src="/assets/images/2025/0804/09.png"></a>
     <p>
         Take two. With Wireshark capturing on <b>ws03</b> I ran <i>another</i> DNS update. "Dynamic update", that's what I was looking for. Exactly as
         theorized, the desktop is requesting the SOA for <b>ws03.lab.local</b> so that it can send the dynamic update directly to that server.
     </p>
-    <a href="/assets/images/20250804/10.png"><img src="/assets/images/20250804/10.png"></a>
+    <a href="/assets/images/2025/0804/10.png"><img src="/assets/images/2025/0804/10.png"></a>
     <p>
         So, we know that a stand-alone DHCP and DNS server will function as expected when placed in an otherwise domain-joined client/server environment. We also
         know <i>how</i> the dynamic DNS update process works when performed from a domain-joined Windows desktop. What are we missing? Right! The non-domain joined
@@ -203,7 +203,7 @@ Set-DhcpServerv4OptionValue -ScopeId 192.168.3.0 -OptionId 6 -Value '192.168.3.1
         the <b>UPDATE</b> message format. The article also includes detailed information on
         <a href="https://learn.microsoft.com/en-us/windows-server/networking/dns/dynamic-update#how-secure-dynamic-update-works">how secure dynamic update works</a>.
     </p>
-    <a href="/assets/images/20250804/11.png"><img src="/assets/images/20250804/11.png"></a>
+    <a href="/assets/images/2025/0804/11.png"><img src="/assets/images/2025/0804/11.png"></a>
     <p>
         Some while ago, the aforementioned friend and I were talking about advice for up-and-coming IT professionals seeking sysadmin or engineering roles. My friend
         brought up a point that behind any seemingly "simple" process, there is an RFC and with it, untold levels of complexity that is often taken for granted. This
@@ -218,7 +218,7 @@ Set-DhcpServerv4OptionValue -ScopeId 192.168.3.0 -OptionId 6 -Value '192.168.3.1
 </section>
 
 <div class="footer">
-    <a href="/blog/20250811.html">◄-2025.08.11</a><b>...</b><a href="/blog/20250714.html">2025.07.14-►</a>
+    <a href="/blog/2025/0811.html">◄-2025.08.11</a><b>...</b><a href="/blog/2025/0714.html">2025.07.14-►</a>
 </div>
 
 </div>

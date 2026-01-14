@@ -29,7 +29,7 @@
     <h1>2025.11.17</h1>
     <h2 id="calamaris">calamaris</h2>
     <p>
-        In my <a href="/blog/20251105.html" target="_blank">last post</a>, I implemented an nginx local mirror list and squid proxy for the caching dnf packages.
+        In my <a href="/blog/2025/1105.html" target="_blank">last post</a>, I implemented an nginx local mirror list and squid proxy for the caching dnf packages.
         I wrapped up that post saying that I would soon explore squid reporting to see just how much data is being saved. A few weeks have past so let's have at it,
         this will be quick. I will use <b>calamaris</b> for reporting squid proxy stats which lives in the EPEL repository, not included with AlmaLinux by default.
         The first step is to get that repo installed and enable the CodeReady Builder (crb) repo as suggested by the
@@ -62,7 +62,7 @@ calamaris /var/log/squid/access.log --unit M
     <p>
         During the past two days, about 400MB of traffic has been proxied through squid with about 58% of it served from cache. Solid.
     </p>
-    <a href="/assets/images/20251117/01.png"><img src="/assets/images/20251117/01.png"></a>
+    <a href="/assets/images/2025/1117/01.png"><img src="/assets/images/2025/1117/01.png"></a>
     <p>
         Let's go back further in logs and let's be <i>fancy</i> about it? The throw-away script below will copy squid access logs to your home directory,
         decompress any zipped log files, and feed <u>all</u> log files into <b>calamaris</b>.
@@ -85,7 +85,7 @@ calamaris $logs --unit M
     <p>
         Now those are numbers that mean something! Since implementation, squid has proxied over 5GB of dnf related traffic with almost 70% being cached.
     </p>
-    <a href="/assets/images/20251117/02.png"><img src="/assets/images/20251117/02.png"></a>
+    <a href="/assets/images/2025/1117/02.png"><img src="/assets/images/2025/1117/02.png"></a>
 </section>
 
 <section>
@@ -106,7 +106,7 @@ calamaris $logs --unit M
 </section>
 
 <div class="footer">
-    <a href="/blog/20251230.html">◄-2025.12.30</a><b>...</b><a href="/blog/20251105.html">2025.11.05-►</a>
+    <a href="/blog/2025/1230.html">◄-2025.12.30</a><b>...</b><a href="/blog/2025/1105.html">2025.11.05-►</a>
 </div>
 
 </div>

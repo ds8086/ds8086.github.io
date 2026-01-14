@@ -35,13 +35,13 @@
         without. ESXi has VMWare Remote Console, KVM <i>should</i> have something similar, right? Enter <b>Virt Viewer</b> available for download from
         <a href="https://virt-manager.org/download.html">virt-manager.org</a>.
     </p>
-    <a href="/assets/images/20251020/01.png"><img src="/assets/images/20251020/01.png"></a>
+    <a href="/assets/images/2025/1020/01.png"><img src="/assets/images/2025/1020/01.png"></a>
     <h3 id="error">error</h3>
     <p>
         After installing <b>Virt Viewer</b> on my local Windows 11 box, I tried the Remote Viewer option. No dice...
     </p>
-    <a href="/assets/images/20251020/02.png"><img src="/assets/images/20251020/02.png"></a>
-    <a href="/assets/images/20251020/03.png"><img src="/assets/images/20251020/03.png"></a>
+    <a href="/assets/images/2025/1020/02.png"><img src="/assets/images/2025/1020/02.png"></a>
+    <a href="/assets/images/2025/1020/03.png"><img src="/assets/images/2025/1020/03.png"></a>
     <h3 id="firewall">firewall</h3>
     <p>
         When VNC is enabled for a domain, the KVM host starts with <b>5900/tcp</b> for connections to the first domain, and increments ports by one for each additional
@@ -57,43 +57,43 @@ firewall-cmd --reload
         A quick sanity check shows the KVM host <i>is</i> making a connection on <b>5902/tcp</b>, but despite the additional firewall rule, Remote Viewer remains
         nonfunctional.
     </p>
-    <a href="/assets/images/20251020/04.png"><img src="/assets/images/20251020/04.png"></a>
+    <a href="/assets/images/2025/1020/04.png"><img src="/assets/images/2025/1020/04.png"></a>
     <h3 id="vncdisplay">vncdisplay</h3>
     <p>
         Running the <b>vncdisplay</b> subcommand in <b>virsh</b> shows that VNC connections are expected on <b>127.0.0.1:2</b>... This is misleading. The KVM host
         is <u>NOT</u> expecting a connection on <b>2/tcp</b> for VNC, instead it is using port 5900 + 2 (<b>5902/tcp</b>).
     </p>
-    <a href="/assets/images/20251020/05.png"><img src="/assets/images/20251020/05.png"></a>
+    <a href="/assets/images/2025/1020/05.png"><img src="/assets/images/2025/1020/05.png"></a>
     <p>
         The issue here is actually the <b>127.0.0.1</b> address. I found a blog post online saying this needs to be <b>0.0.0.0</b>. No <i>actual</i> explanation
         was provided, just... update this address and it works. So what does that process look like? Start by powering down the domain, then edit the domain config
         using <b>virsh edit $domain</b>. Find the <b>graphics type</b> element and change the two <b>127.0.0.1</b> entries to <b>0.0.0.0</b>, then save the file.
     </p>
-    <a href="/assets/images/20251020/06.png"><img src="/assets/images/20251020/06.png"></a>
+    <a href="/assets/images/2025/1020/06.png"><img src="/assets/images/2025/1020/06.png"></a>
     <p>
         Next up, open <b>/etc/libvirt/qemu.conf</b> in vi(m), then uncomment the <b>vnc_listen</b> line. Save the file and bounce the <b>libvirtd</b> daemon.
     </p>
-    <a href="/assets/images/20251020/10.png"><img src="/assets/images/20251020/10.png"></a>
+    <a href="/assets/images/2025/1020/10.png"><img src="/assets/images/2025/1020/10.png"></a>
     <h3 id="confirmation">confirmation</h3>
     <p>
         Start up the domain and re-run the <b>vncdisplay</b> command. Output will display <b>:num</b>.
     </p>
-    <a href="/assets/images/20251020/07.png"><img src="/assets/images/20251020/07.png"></a>
+    <a href="/assets/images/2025/1020/07.png"><img src="/assets/images/2025/1020/07.png"></a>
     <p>
         Back in cockpit, the <i>Manual connection</i> information now displays <b>0.0.0.0</b> rather than <b>127.0.0.1</b>...
     </p>
-    <a href="/assets/images/20251020/08.png"><img src="/assets/images/20251020/08.png"></a>
+    <a href="/assets/images/2025/1020/08.png"><img src="/assets/images/2025/1020/08.png"></a>
     <p>
         ...and launching the remote viewer is now successful.
     </p>
-    <a href="/assets/images/20251020/09.png"><img src="/assets/images/20251020/09.png"></a>
+    <a href="/assets/images/2025/1020/09.png"><img src="/assets/images/2025/1020/09.png"></a>
     <p>
         Suppose I could uninstall VMWare Remote Console now, eh?
     </p>
 </section>
 
 <div class="footer">
-    <a href="/blog/20251105.html">◄-2025.11.05</a><b>...</b><a href="/blog/20251017.html">2025.10.17-►</a>
+    <a href="/blog/2025/1105.html">◄-2025.11.05</a><b>...</b><a href="/blog/2025/1017.html">2025.10.17-►</a>
 </div>
 
 </div>

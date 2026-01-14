@@ -36,8 +36,8 @@
     <h1>2025.08.29</h1>
     <h2 id="tina-iii">tina III</h2>
     <p>
-        Time for the last item on the hit list; AD backup and restore. No idea what I am talking about? Go back and read <a href="/blog/20250811.html" target="_blank">tina</a>
-        where I configured a Debian & Samba powered Active Directory domain controller, and <a href="/blog/20250822.html" target="_blank">tina II</a> where Group Policy was
+        Time for the last item on the hit list; AD backup and restore. No idea what I am talking about? Go back and read <a href="/blog/2025/0811.html" target="_blank">tina</a>
+        where I configured a Debian & Samba powered Active Directory domain controller, and <a href="/blog/2025/0822.html" target="_blank">tina II</a> where Group Policy was
         enabled, a second DC was provisioned, and rsync was configured to mimic native SysVol replication. Otherwise, read on because you're <i>basically</i> up to speed now.
         So, AD backup and restore... if you <i>have</i> read the AD saga thus far, you know that I have referenced the SambaWiki extensively and this post will start off
         the same. There is <a href="https://wiki.samba.org/index.php/Back_up_and_Restoring_a_Samba_AD_DC" target=" _blank">documentation</a> covering the topic of AD
@@ -61,7 +61,7 @@ samba-tool domain backup online --targetdir=/backup --server=DC01 -UAdministrato
         securely in an "offline" fashion. Good time to dust off that LTO tape appliance, eh? Maybe that's too far... Wherever the backups are stored, ensure that you
         can access them <i>without</i> AD authentication.
     </p>
-    <a href="/assets/images/20250829/01.png"><img src="/assets/images/20250829/01.png"></a>
+    <a href="/assets/images/2025/0829/01.png"><img src="/assets/images/2025/0829/01.png"></a>
 </section>
 
 <section>
@@ -97,13 +97,13 @@ samba-tool domain backup restore --backup-file=/root/samba-backup-ad.lab.local-2
     <p>
         The restore <i>seems</i> to have been successful. Let's have a look at the <b>smb.conf</b> file as the screen says.
     </p>
-    <a href="/assets/images/20250829/02.png"><img src="/assets/images/20250829/02.png"></a>
+    <a href="/assets/images/2025/0829/02.png"><img src="/assets/images/2025/0829/02.png"></a>
     <pre>
         <code>
 cat /restore/etc/smb.conf
         </code>
     </pre>
-    <a href="/assets/images/20250829/03.png"><img src="/assets/images/20250829/03.png"></a>
+    <a href="/assets/images/2025/0829/03.png"><img src="/assets/images/2025/0829/03.png"></a>
     <p>
         Looks good. Can we start Samba...
     </p>
@@ -112,7 +112,7 @@ cat /restore/etc/smb.conf
 samba -s /restore/etc/smb.conf -i
         </code>
     </pre>
-    <a href="/assets/images/20250829/04.png"><img src="/assets/images/20250829/04.png"></a>
+    <a href="/assets/images/2025/0829/04.png"><img src="/assets/images/2025/0829/04.png"></a>
     <p>
         ...no. Rebooting does not resolve the issue either. Looking through logs, I found errors such as <i>smb is already running</i> and <i>winbind is already running</i>.
         Since <b>dc03</b> will be a "temporary" domain controller, I disabled and stopped Samba and its related services via the code below, then attempted to start
@@ -132,25 +132,25 @@ samba -s /restore/etc/smb.conf -i
     <p>
         Following this, there are no errors in logs and Samba successfully starts. <i>Very nice!</i>
     </p>
-    <a href="/assets/images/20250829/05.png"><img src="/assets/images/20250829/05.png"></a>
+    <a href="/assets/images/2025/0829/05.png"><img src="/assets/images/2025/0829/05.png"></a>
     <h3 id="validation">validation</h3>
     <p>
         Before (re)joining the old DCs to the domain, how about a look at DNS and Active Directory in its current state? Logging into the Windows management box
         (<b>srv01</b>), we can see that only <b>dc03</b> serves as the SOA and sole name server for the <b>ad.lab.local</b> AD integrated DNS zone.
     </p>
-    <a href="/assets/images/20250829/06.png"><img src="/assets/images/20250829/06.png"></a>
+    <a href="/assets/images/2025/0829/06.png"><img src="/assets/images/2025/0829/06.png"></a>
     <p>
         What about ADUC? The two, previously joined domain members are still present. 
     </p>
-    <a href="/assets/images/20250829/07.png"><img src="/assets/images/20250829/07.png"></a>
+    <a href="/assets/images/2025/0829/07.png"><img src="/assets/images/2025/0829/07.png"></a>
     <p>
         After updating the DNS client config on <b>srv01</b> to use <b>dc03</b> for lookups, I can log into the domain as expected.
     </p>
-    <a href="/assets/images/20250829/08.png"><img src="/assets/images/20250829/08.png"></a>
+    <a href="/assets/images/2025/0829/08.png"><img src="/assets/images/2025/0829/08.png"></a>
     <p>
         What about domain controllers? As you could probably guess, only <b>dc03</b> is present.
     </p>
-    <a href="/assets/images/20250829/09.png"><img src="/assets/images/20250829/09.png"></a>
+    <a href="/assets/images/2025/0829/09.png"><img src="/assets/images/2025/0829/09.png"></a>
     <p>
         Could this actually be <i>easier</i> than dealing with DSRM?! Is that possible? I've yet to boot anything while mashing <b>F8</b>...
     </p>
@@ -165,13 +165,13 @@ samba-tool domain join ad.lab.local DC -U "AD\administrator"
 systemctl start samba
         </code>
     </pre>
-    <a href="/assets/images/20250829/10.png"><img src="/assets/images/20250829/10.png"></a>
+    <a href="/assets/images/2025/0829/10.png"><img src="/assets/images/2025/0829/10.png"></a>
     <p>
         Once the DCs are joined back to the domain, their respective <b>resolv.conf</b> files are updated <i>back</i> to using their own IP address for DNS resolution.
     </p>
     <h3 id="rsync">rsync</h3>
     <p>
-        Setting up SysVol replication via <b>rsync</b> is the same process outlined in the <a href="/blog/20250822.html#replication" target="_blank">replication</a>
+        Setting up SysVol replication via <b>rsync</b> is the same process outlined in the <a href="/blog/2025/0822.html#replication" target="_blank">replication</a>
         section of my previous post with these minor modifications.
     </p>
     <ul>
@@ -181,7 +181,7 @@ systemctl start samba
     <p>
         With SysVol replication in place, the restore process is technically complete. <b>\o/</b>
     </p>
-    <a href="/assets/images/20250829/11.png"><img src="/assets/images/20250829/11.png"></a>
+    <a href="/assets/images/2025/0829/11.png"><img src="/assets/images/2025/0829/11.png"></a>
 </section>
 
 <section>
@@ -195,7 +195,7 @@ systemctl start samba
 samba-tool fsmo show
         </code>
     </pre>
-    <a href="/assets/images/20250829/12.png"><img src="/assets/images/20250829/12.png"></a>
+    <a href="/assets/images/2025/0829/12.png"><img src="/assets/images/2025/0829/12.png"></a>
     <p>
         The roles are easily moved <i>back</i> to <b>dc01</b>.
     </p>
@@ -205,7 +205,7 @@ samba-tool fsmo transfer --role=all --username=Administrator
 samba-tool fsmo show
         </code>
     </pre>
-    <a href="/assets/images/20250829/13.png"><img src="/assets/images/20250829/13.png"></a>
+    <a href="/assets/images/2025/0829/13.png"><img src="/assets/images/2025/0829/13.png"></a>
     <h3 id="demote">demote</h3>
     <p>
         The last step is to demote <b>dc03</b>. <i>I hardly knew ye'.</i> The code below is executed directly on <b>dc03</b>.
@@ -215,11 +215,11 @@ samba-tool fsmo show
 samba-tool domain demote -s /restore/etc/smb.conf --username=Administrator
         </code>
     </pre>
-    <a href="/assets/images/20250829/14.png"><img src="/assets/images/20250829/14.png"></a>
+    <a href="/assets/images/2025/0829/14.png"><img src="/assets/images/2025/0829/14.png"></a>
     <p>
         A wall of green text ending with <i>Demote successful</i> and the DC is automatically removed from the domain.
     </p>
-    <a href="/assets/images/20250829/15.png"><img src="/assets/images/20250829/15.png"></a>
+    <a href="/assets/images/2025/0829/15.png"><img src="/assets/images/2025/0829/15.png"></a>
 </section>
 
 <section>
@@ -247,7 +247,7 @@ samba-tool domain demote -s /restore/etc/smb.conf --username=Administrator
 </section>
 
 <div class="footer">
-    <a href="/blog/20250912.html">◄-2025.09.12</a><b>...</b><a href="/blog/20250822.html">2025.08.22-►</a>
+    <a href="/blog/2025/0912.html">◄-2025.09.12</a><b>...</b><a href="/blog/2025/0822.html">2025.08.22-►</a>
 </div>
 
 </div>

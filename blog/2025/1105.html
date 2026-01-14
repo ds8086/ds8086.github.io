@@ -57,7 +57,7 @@ dnf install squid -y
         and then re-encrypt https connections. For this to function, squid will act as a certificate authority, issuing temporary certificates to clients as needed.
         To start, <b>/etc/ssl/openssl.cnf</b> needs to be modified by uncommenting <b>keyUsage = cRLSign, keyCertSign</b> under the <b>[ v3_ca ]</b> directive.
     </p>
-    <a href="/assets/images/20251105/01.png"><img src="/assets/images/20251105/01.png"></a>
+    <a href="/assets/images/2025/1105/01.png"><img src="/assets/images/2025/1105/01.png"></a>
     <p>
         If I have the opportunity to provision a certificate which may outlive my career in IT, I am taking it. The code below creates the directory where squid
         shall store certificates, then creates a self-signed CA certificate which squid will use for <i>issuing</i> certificates. Complete the CSR as you see fit.
@@ -68,7 +68,7 @@ mkdir /etc/squid/ssl_cert
 openssl req -new -newkey rsa:2048 -sha256 -days 3650 -nodes -x509 -extensions v3_ca -keyout /etc/squid/ssl_cert/squid.pem -out /etc/squid/ssl_cert/squid.pem
         </code>
     </pre>
-    <a href="/assets/images/20251105/02.png"><img src="/assets/images/20251105/02.png"></a>
+    <a href="/assets/images/2025/1105/02.png"><img src="/assets/images/2025/1105/02.png"></a>
     <p>
         The code below creates a certificate using the previously created x509 file, copies it to the CA trust store, then updates trusted CAs. The <b>squid.crt</b>
         certificate will also need to be installed on all proxy clients using this method (lines 2 and 3). Might as well do that now.
@@ -149,7 +149,7 @@ ssl_bump bump all
 squid -z
         </code>
     </pre>
-    <a href="/assets/images/20251105/03.png"><img src="/assets/images/20251105/03.png"></a>
+    <a href="/assets/images/2025/1105/03.png"><img src="/assets/images/2025/1105/03.png"></a>
     <p>
         The SSL database is then initialized in <b>/var/spool/squid</b> to ensure that SELinux does not cause issues.
     </p>
@@ -158,7 +158,7 @@ squid -z
 sudo -u squid /usr/lib64/squid/security_file_certgen -c -s /var/spool/squid/ssl_db -M 4MB
         </code>
     </pre>
-    <a href="/assets/images/20251105/04.png"><img src="/assets/images/20251105/04.png"></a>
+    <a href="/assets/images/2025/1105/04.png"><img src="/assets/images/2025/1105/04.png"></a>
     <p>
         Time to start squid and check the status for any errors.
     </p>
@@ -168,7 +168,7 @@ systemctl start squid
 systemctl status squid
         </code>
     </pre>
-    <a href="/assets/images/20251105/05.png"><img src="/assets/images/20251105/05.png"></a>
+    <a href="/assets/images/2025/1105/05.png"><img src="/assets/images/2025/1105/05.png"></a>
     <p>
         The status looks good, so squid can be enabled for automatic startup. The required ports are also added to the firewall config.
     </p>
@@ -183,11 +183,11 @@ firewall-cmd --reload
     <p>
         This is a good point to test squid's ability to actually proxy web requests from clients and cache web responses. First a <b>curl</b> from my KVM host...
     </p>
-    <a href="/assets/images/20251105/06.png"><img src="/assets/images/20251105/06.png"></a>
+    <a href="/assets/images/2025/1105/06.png"><img src="/assets/images/2025/1105/06.png"></a>
     <p>
         ...Followed by a <b>curl</b> from my docker host.
     </p>
-    <a href="/assets/images/20251105/07.png"><img src="/assets/images/20251105/07.png"></a>
+    <a href="/assets/images/2025/1105/07.png"><img src="/assets/images/2025/1105/07.png"></a>
     <p>
         Both of the <b>curl</b> requests were successful. Remember, any clients using the squid proxy for web requests need the previously created
         CA certificate from squid installed. If you are following along and have received certificate errors from <b>curl</b>, go back to the
@@ -198,7 +198,7 @@ firewall-cmd --reload
 cat /var/log/squid/access.log | grep ds
         </code>
     </pre>
-    <a href="/assets/images/20251105/08.png"><img src="/assets/images/20251105/08.png"></a>
+    <a href="/assets/images/2025/1105/08.png"><img src="/assets/images/2025/1105/08.png"></a>
     <p>
         We can safely say that squid successfully proxied the https request from both clients and that the <i>second</i> request was served from in-memory cache.
     </p>
@@ -277,7 +277,7 @@ systemctl enable nginx --now
         With nginx running, the local mirror list website can be tested. I cannot figure out <i>why</i> the mirrors are all displayed on one line. I tried
         changing the file encoding, as well as the carriage return characters. It matters not as dnf clients make use of the file in this state.
     </p>
-    <a href="/assets/images/20251105/09.png"><img src="/assets/images/20251105/09.png"></a>
+    <a href="/assets/images/2025/1105/09.png"><img src="/assets/images/2025/1105/09.png"></a>
     <p>
         <b>*</b> If you are using a VPN client for egress internet traffic, take that into consideration when viewing your list of closest mirrors. You might also
         consider how "private" your VPN connection really is. Do you manage the VPN connection or does a service provider? How much do you <i>pay</i> that service
@@ -336,11 +336,11 @@ dnf update
         perform <b>dnf update</b> will have http requests served by squid cache. This was immediately evident from just the download speed of repo data for
         each client following the first.
     </p>
-    <a href="/assets/images/20251105/10.png"><img src="/assets/images/20251105/10.png"></a>
+    <a href="/assets/images/2025/1105/10.png"><img src="/assets/images/2025/1105/10.png"></a>
     <p>
         Viewing the access log for squid confirms responses were served from cache using both data cached in memory and on disk.
     </p>
-    <a href="/assets/images/20251105/11.png"><img src="/assets/images/20251105/11.png"></a>
+    <a href="/assets/images/2025/1105/11.png"><img src="/assets/images/2025/1105/11.png"></a>
 </section>
 
 <section>
@@ -357,7 +357,7 @@ dnf update
 </section>
 
 <div class="footer">
-    <a href="/blog/20251117.html">◄-2025.11.17</a><b>...</b><a href="/blog/20251020.html">2025.10.20-►</a>
+    <a href="/blog/2025/1117.html">◄-2025.11.17</a><b>...</b><a href="/blog/2025/1020.html">2025.10.20-►</a>
 </div>
 
 </div>
