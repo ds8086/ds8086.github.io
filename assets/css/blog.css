@@ -177,7 +177,9 @@ table, th, td {
         height: auto;
         position: relative;
     }
-    .sidebar a {float: left;}
+    .sidebar a {
+        float: left;
+    }
     .pagenav {
         display: none;
     }
@@ -194,5 +196,20 @@ table, th, td {
     }
     .pagenav {
         display: none;
+    }
+}
+
+@media print {
+    .pagenav {
+        display: none;
+        visibility: hidden;
+    }
+    .sidebar {
+        display: none;
+        visibility: hidden;
+    }
+    div.content {
+        margin-left: 0;
+        margin-right: 0;
     }
 }
