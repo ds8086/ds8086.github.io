@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.08.11</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="ad, linux, samba">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#tina">tina</a>
+    <a href="#materials" style="font-size: 12pt;">- materials</a>
+    <a href="#distro" style="font-size: 12pt;">- distro</a>
+    <a href="#dc-vm">dc vm</a>
+    <a href="#prep-work" style="font-size: 12pt;">- prep work</a>
+    <a href="#install" style="font-size: 12pt;">- install</a>
+    <a href="#configure" style="font-size: 12pt;">- configure</a>
+    <a href="#verify" style="font-size: 12pt;">- verify</a>
+    <a href="#desktop">desktop</a>
+    <a href="#server">server</a>
+    <a href="#next-steps">next steps</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.08.11</h1>
+    <h2 id="tina">tina</h2>
+    <p>
+        In just the past few months, Microsoft has published patches which have caused widespread failures for core Windows Server services.
+    </p>
+    <ul>
+        <li>
+            <a href="https://support.microsoft.com/en-us/topic/june-10-2025-kb5060526-os-build-20348-3807-4e9453c4-6602-48ea-b349-689cd66dfdb9" target="_blank">KB5060526</a>:
+            Released in June 2025, broke DHCP on Windows Server 2022.
+        </li>
+        <li>
+            <a href="https://support.microsoft.com/en-us/topic/july-8-2025-kb5062557-os-build-17763-7558-9a2cd65b-c7a7-4331-87c4-84790511f6fe" target="_blank">KB5062557</a>:
+            Released in July 2025, caused Cluster service and VM restarts.
+        </li>
+        <li>
+            <a href="https://support.microsoft.com/en-us/topic/july-8-2025-kb5062152-cumulative-update-for-net-framework-3-5-4-7-2-and-4-8-for-windows-10-version-1809-and-windows-server-2019-6c2444d5-f73a-44c8-b8dc-b1e4f5f9fec7" target="_blank"">KB5062152</a>:
+            <i>Also</i> released in July 2025, bad metadata caused a full sync of every WSUS server worldwide...
+        </li>
+    </ul>
+    <p>
+        ...yes, Microsoft released an update which DDoS'd their own infrastructure. Wondering how we got here? Remember,
+        <a href="https://duckduckgo.com/?q=microsoft+30%25+of+code+written+by+AI&t=h_&ia=web" target="_blank">up to 30% of Microsoft's code is now written by AI</a>. A statement which will
+        likely haunt Satya Nadella every patch Tuesday for the rest tenure as CEO. The issues caused by these updates were bad, but think about how much
+        <i>worse</i> it could be. What happens when Kerberos breaks? Imagine that Wednesday morning phone call, no one can authenticate to the domain, every system in your
+        environment which relies upon Active Directory is just dead in the water. This eventuality is one AI hallucination away. Windows powered Active Directory has been
+        and will likely remain the de facto authentication mechanism because TINA, there is no alternative...<i>right?</i>
+    </p>
+    <p>
+        Sure, you could ditch on-premises Active Directory in favor of <s>Azure AD</s> Entra ID. Just go all-in with Microsoft cloud services, they will happily take your money
+        and should the service availability fall below the mythical five-9s, you will get a service credit for your trouble. Just imagine <i>that</i> conversation with
+        your leadership. <i>"Microsoft apologizes for the Entra ID outage which cost us sales revenue. It is fixed now, and they have given us a service credit."</i>
+    </p>
+    <p>
+        Doomsday soothsaying aside, what alternative is there <i>really</i>? A long time ago, in a company merger far far away... I learned that you can run Active Directory
+        on Linux. You read that correctly; a Linux based domain controller with all the AD capabilities your business requires*. Search this subject online and you will be
+        met with a mob of sysadmins trying to convince you why you <i>should not</i> endeavor to implement this. The seemingly evergreen topic is perpetually focused on
+        Microsoft licensing costs. Many who would consider running Active Directory on Linux are responsible for small environments with even <i>smaller</i> budgets. The
+        sysadmins who <i>might</i> consider a Linux powered AD domain are dissuaded from doing so usually due to the complexity of setup and management.
+    </p>
+    <p>
+        In the famous words of Jeremy Clarkson; <i>"How hard could it be?"</i>
+    </p>
+    <br>
+    <p style="font-size: 7pt;">
+        * Provided you can make due with a forest functionality level of Windows Server 2008r2.
+    </p>
+    <h3 id="materials">materials</h3>
+    <p>
+        Below is the materials list for this little foray into the twilight zone.
+    </p>
+    <ul>
+        <li><a href="https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller" target="_blank">Samba documentation</a></li>
+        <li><s>AlmaLinux 9 VM acting as <b>dc01</b></s></li>
+        <li>A distro to use instead of AlmaLinux9</li>
+        <li>Linux VM (distro TBD) acting as <b>dc01</b></li>
+        <li>Windows desktop OS to validate domain join</li>
+        <li>Windows Server OS for testing RSAT</li>
+        <li>Patience</li>
+    </ul>
+</section>
+
+<section>
+    <h3 id="distro">distro</h3>
+    <p>
+        Since the death of centos, I have adopted <a href="https://almalinux.org/" target="_blank">AlmaLinux</a> as my distribution of choice for all things Linux in my home
+        lab. Up until <i>today</i> it has met every one of my needs, be it a squid proxy, a Minecraft server, or a Docker host. It turns out that RHEL and its relative distros
+        do not provide the packages for running Samba as a domain controller. The first hurdle before even leaving the starting gate. Upon finding this, I am met with
+        a short list of options.
+    </p>
+    <ul>
+        <li>Build Samba from source and configure it manually.</li>
+        <li>Use a 3rd party repo which hosts the required packages.</li>
+        <li>Run a different distro.</li>
+    </ul>
+    <p>
+        By its very nature, the project places me well outside of my Windows comfort zone. Building from source would undoubtedly yield more of a learning opportunity, but
+        also carries the increased risk of, <i>"Nuts to this, I'm gonna to play video games"</i>. Someday, perhaps, but not today. A 3rd party repo could work, but I'm not
+        deep enough into the Linux weeds to know of any trustworthy repos for this niche purpose. Another distro it is, but which one?
+    </p>
+    <p>
+        The <a href="https://wiki.samba.org/index.php/Distribution-specific_Package_Installation" target="_blank">documentation</a> has a short list distros with specific
+        package installation instructions; Debian/Ubuntu, FreeBSD, or openSUSE. I have a weird view on Ubuntu; I've used it previously for a few things, it has solid
+        documentation and community provided support. I just... don't care for it. Too many YAML files? Easy mode Linux? Perhaps it is just my contrarian nature.
+    </p>
+    <p>
+        <i>"Debian. Familiar package manager but different enough to be... different. Oh good, there is a minimal option. Sold."</i>
+    </p>
+</section>
+
+<section>
+    <h2 id="dc-vm">dc vm</h2>
+    <p>
+        Here is the plan for the Debian powered domain controller.
+    </p>
+    <table>
+        <tr>
+            <td>Hostname</td>
+            <td>dc01</td>
+        </tr>
+        <tr>
+            <td>IP addr</td>
+            <td>192.168.1.10/24</td>
+        </tr>
+        <tr>
+            <td>AD domain</td>
+            <td>ad.lab.local</td>
+        </tr>
+    </table>
+    <p>
+        Next... next... next through the graphical install of Debian 12, reboot, and SSH in. Here we go.
+    </p>
+    <h3 id="prep-work">prep work</h3>
+    <p>
+        First step: check for updates and install <b>vim</b>.
+    </p>
+    <pre>
+        <code>
+sudo apt-get update -y
+sudo apt-get install vim -y
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0811/01.png"><img src="/assets/images/2025/0811/01.png"></a>
+    <p>
+        Whoa... it does not include the packages required for <b>sudo</b>. Now <i>that's</i> minimal! This will be fun.
+    </p>
+    <pre>
+        <code>
+su -
+        </code>
+    </pre>
+    <p>
+        Take two: updates and <b>vim</b>.
+    </p>
+    <pre>
+        <code>
+apt-get update -y
+apt-get install vim -y
+        </code>
+    </pre>
+    <p>
+        We'll need static a static IP address for this to work. Backup the config file, then edit it.
+    </p>
+    <pre>
+        <code>
+cp /etc/network/interfaces ~/interfaces.bak
+vim /etc/network/interfaces
+        </code>
+    </pre>
+    <p>
+        <b>Before</b>
+    </p>
+    <a href="/assets/images/2025/0811/02.png"><img src="/assets/images/2025/0811/02.png"></a>
+    <p>
+        <b>After</b>
+    </p>
+    <a href="/assets/images/2025/0811/03.png"><img src="/assets/images/2025/0811/03.png"></a>
+    <p>
+        The networking service must be bounced following the change.
+        <br>
+        <i>"Did I fat finger the gateway?"</i>
+    </p>
+    <pre>
+        <code>
+systemctl restart networking.service
+        </code>
+    </pre>
+    <p>
+        The DC must resolve both its own FQDN and hostname.
+    </p>
+    <pre>
+        <code>
+echo "192.168.1.10    dc01.ad.lab.local       dc01" >> /etc/hosts
+        </code>
+    </pre>
+    <p>
+        With that, the DC is ready for package installation and configuration. Probably a good time to shutdown and snapshot the VM.
+    </p>
+    <h3 id="install">install</h3>
+    <p>
+        Package installation is a snap. During installation the interactive configuration for Samba fires off, I just left everything blank and <i>OK'd</i> through each
+        of the prompts. The Samba config will be removed and recreated properly during the domain provisioning process anyway.
+    </p>
+    <pre>
+        <code>
+apt-get install acl attr samba winbind libpam-winbind libnss-winbind krb5-config krb5-user dnsutils python3-setproctitle ntp -y
+        </code>
+    </pre>
+    <p>
+        Next step: configure Samba. Another good opportunity to shutdown and snapshot the VM.
+    </p>
+    <h3 id="configure">configure</h3>
+    <p>
+        The Samba config created during package installation can be removed, might as well back it up first though right?
+    </p>
+    <pre>
+        <code>
+cp /etc/samba/smb.conf ~/smb.conf.bak
+rm /etc/samba/smb.conf
+        </code>
+    </pre>
+    <p>
+        On to provisioning the domain. I was expecting the <b>@</b> in the password to cause issues, thankfully  it did not.
+    </p>
+    <pre>
+        <code>
+samba-tool domain provision --server-role=dc --use-rfc2307 --dns-backend=SAMBA_INTERNAL --realm=AD.LAB.LOCAL --domain=AD --adminpass=P@ssw0rd!
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0811/04.png"><img src="/assets/images/2025/0811/04.png"></a>
+    <p>
+        A wall of mostly green text would seem to indicate success. Next, the DNS resolver config needs updating as well. With nothing worthy of backup, slam two
+        lines into the file and move on with life.
+    </p>
+    <pre>
+        <code>
+echo "search ad.lab.local" > /etc/resolv.conf
+echo "nameserver 192.168.1.10" >> /etc/resolv.conf
+        </code>
+    </pre>
+    <p>
+        Next, the <a href="https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller#Configuring_Kerberos" target=" _blank">documentation</a>
+        says to copy the <b>krb5.conf</b> file created during domain provisioning to the operating system Kerberos configuration. Referring to the wall of green text we
+        see where the file was created and run the command below.
+    </p>
+    <pre>
+        <code>
+cp /var/lib/samba/private/krb5.conf /etc/krb5.conf
+        </code>
+    </pre>
+    <p>
+        At this point the Samba service can actually be <i>started</i> and made to start automatically.
+    </p>
+    <pre>
+        <code>
+systemctl start samba
+systemctl enable samba
+        </code>
+    </pre>
+    <p>
+        Active Directory is nothing without DNS, a fact that easily carries over from Windows to Linux. The commands below will create a reverse lookup zone and a PTR
+        record <i>within</i> the zone for the domain controller. This is also a good test for your DNS resolver configuration.
+    </p>
+    <pre>
+        <code>
+samba-tool dns zonecreate dc01 1.168.192.in-addr.arpa -U Administrator
+samba-tool dns add dc01 1.168.192.in-addr.arpa 10 PTR dc01.ad.lab.local -U Administrator
+        </code>
+    </pre>
+    <h3 id="verify">verify</h3>
+    <p>
+        The <a href="https://wiki.samba.org/index.php/Setting_up_Samba_as_an_Active_Directory_Domain_Controller#Verifying_the_File_Server_(Optional)" target="_blank">documentation</a>
+        has a step to verify file server functionality using <b>smbclient</b>. Depending on how <i>minimal</i> your distro is, you may or may not have this package... I do not.
+        I can, however, verify DNS resolution using the code below.
+    </p>
+    <pre>
+        <code>
+host -t SRV _ldap._tcp.ad.lab.local
+host -t SRV _kerberos._tcp.ad.lab.local
+host -t A dc01.ad.lab.local
+host -t PTR 192.168.1.10
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0811/05.png"><img src="/assets/images/2025/0811/05.png"></a>
+    <p>
+        Each query gave an answer, that seems good. What about Kerberos, does it work?
+    </p>
+    <pre>
+        <code>
+kinit administrator
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0811/06.png"><img src="/assets/images/2025/0811/06.png"></a>
+    <p>
+        If I am being told when my password expires I <i>must</i> be successfully authenticated, but let's list Kerberos tickets.
+    </p>
+    <pre>
+        <code>
+klist
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0811/07.png"><img src="/assets/images/2025/0811/07.png"></a>
+    <p>
+        We have a functional Active Directory domain controller! <b>\o/</b>
+    </p>
+</section>
+
+<section>
+    <h2 id="desktop">desktop</h2>
+    <p>
+        Now to verify that a desktop OS can join the newly minted domain. Since the forest functionality level for this implementation is Server 2008r2, how about
+        a <i>period authentic</i> desktop? Arguably one of the last great desktop operating systems from Microsoft; Windows 7 SP1.
+    </p>
+    <a href="/assets/images/2025/0811/08.png"><img src="/assets/images/2025/0811/08.png"></a>
+    <p>
+        <b>&lt;rant&gt;</b>
+        <br>
+        Never forget, Microsoft once gave us a desktop operating system which...
+    </p>
+    <ul>
+        <li>Contained <u>no</u> bloatware.</li>
+        <li>Booted in under a minute.</li>
+        <li>Had a functional start menu.</li>
+        <li>Ran <u>tens</u> of processes, not hundreds.</li>
+        <li>Did this all in less than 1GB of memory.</li>
+    </ul>
+    <p>
+        ...More "features" should never mean less usability.
+        <br>
+        <b>&lt;/rant&gt;</b>
+    </p>
+    <a href="/assets/images/2025/0811/09.png"><img src="/assets/images/2025/0811/09.png"></a>
+    <p>
+        It was also able to join the domain. <b>\o/</b>
+    </p>
+</section>
+
+<section>
+    <h2 id="server">server</h2>
+    <p>
+        In addition to the fine vintage of Windows 7, I wanted to ensure that a modern OS could join the domain. For those of you who have not memorized the <b>win32</b>
+        operating system class version numbers, I selected Windows Server 2022, which also joined the domain without issue.
+    </p>
+    <a href="/assets/images/2025/0811/10.png"><img src="/assets/images/2025/0811/10.png"></a>
+    <p>
+        With a few RSAT management tools installed, let's see what this Windows server has to say about the domain it has just joined.
+    </p>
+    <a href="/assets/images/2025/0811/11.png"><img src="/assets/images/2025/0811/11.png"></a>
+    <p>
+        Ah, the PowerShell module does not work. I suppose this <i>would</i> be expecting a lot given the circumstances. Remember, this domain is running what is largely
+        considered bootleg Active Directory. All is not lost though, the tried and true <b>ds*</b> commands such as <b>dsquery</b> are functional so you would
+        <i>technically</i> have programmatic management capabilities. Prepare to visit <a href="https://ss64.com/nt/" target="_blank">ss64.com</a> more frequently.
+    </p>
+    <a href="/assets/images/2025/0811/12.png"><img src="/assets/images/2025/0811/12.png"></a>
+    <p>
+        In all reality, if you were to implement Linux powered Active Directory, it would (hopefully) be at a very small scale where management would likely take place via
+        a GUI. The Active Directory Users and Computers snap-in is exactly what you would expect and accurately shows both the desktop and the server domain members.
+    </p>
+    <a href="/assets/images/2025/0811/13.png"><img src="/assets/images/2025/0811/13.png"></a>
+    <p>
+        There it is. In all of its strange and not yet fully understood splendor, the Debian powered domain controller.
+    </p>
+    <a href="/assets/images/2025/0811/14.png"><img src="/assets/images/2025/0811/14.png"></a>
+    <p>
+        A quick look in DNS provides a familiar sight with the expected AD integrated forward lookup zone, created during the domain provisioning process as well as the
+        reverse lookup zone which was created later on. Both <b>ws01</b> and <b>srv01</b> have dynamically updated their corresponding DNS records just as you would expect.
+        If you read my <a href="/blog/2025/0804.html" target="_blank">previous post</a>, you should be able to explain both how and why.
+    </p>
+    <a href="/assets/images/2025/0811/15.png"><img src="/assets/images/2025/0811/15.png"></a>
+</section>
+
+<section>
+    <h2 id="next-steps">next steps</h2>
+    <p>
+        This has been an interesting learning experience which is <i>far</i> from over.
+    </p>
+    <ul>
+        <li>A second DC is required.</li>
+        <li>GPO does not exist yet.</li>
+        <li>How is AD backed up?</li>
+        <li>How is AD <i>restored?</i>
+    </ul>
+    <p>
+        Topics for a future post, but until then, fire up a Samaba powered AD domain for yourself.
+        <br>
+        No college dorm room required. <b>=)</b>
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2025/0822.html">◄-2025.08.22</a><b>...</b><a href="/blog/2025/0804.html">2025.08.04-►</a>
+</div>
+
+</div>
+</body>
+</html>

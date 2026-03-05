@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.07.02</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="ad, dfs, windows">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#there-from-here">there from here</a>
+    <a href="#sites-and-services">sites and services</a>
+    <a href="#dfs-and-shares">dfs and shares</a>
+    <a href="#referral-ordering">referral ordering</a>
+    <a href="#inter-site-transports">inter-site transports</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.07.02</h1>
+    <h2 id="there-from-here">there from here</h2>
+    <p>
+        A friend and I were discussing Active Directory and DFS namespaces following some strange behavior on his network. Basically, while working from his home office in
+        Vegas, DFS namespaces and folder targets behaved as expected serving data from the file server at the Vegas location. However, when working from the Elko office the
+        DFS namespaces and folder targets were selected seemingly at random, with data being served from either the file server at the Vegas location <i>or</i> the file server
+        at the Reno location, which in this case, was not desirable as the link between Elko and Reno was a low-speed, high-latency "backup" link. The environment exists as
+        outlined below.
+    </p>
+    <table>
+        <tr>
+            <th>Site</th>
+            <th>Subnet</th>
+            <th>Server</th>
+        </tr>
+        <tr>
+            <td>Carson</td>
+            <td>192.168.1.0/24</td>
+            <td>DC01 (Domain Controller)</td>
+        </tr>
+        <tr>
+            <td>Elko</td>
+            <td>192.168.2.0/24</td>
+            <td>DC02 (Domain Controller)</td>
+        </tr>
+        <tr>
+            <td>Reno</td>
+            <td>192.168.3.0/24</td>
+            <td>FS01 (File Server)</td>
+        </tr>
+        <tr>
+            <td>Vegas</td>
+            <td>192.168.4.0/24</td>
+            <td>FS02 (File Server)</td>
+        </tr>
+    </table>
+</section>
+
+<section>
+    <h2 id="sites-and-services">Sites and Services</h2>
+    <p>
+        <i>What does AD Sites and Services look like? Are all the sites and subnets there?</i>
+        <br>
+        They were and the domain controllers were associated with the correct sites. Good start.
+    </p>
+    <a href="/assets/images/2025/0702/01.png"><img src="/assets/images/2025/0702/01.png"></a>
+    <p>
+        <i>How about the Inter-Site Transports? Are links defined properly where site connectivity exists?</i>
+        <br>
+        Only <b>DEFAULTSITELINK</b> exists and the sites associated with it are those with domain controllers. Problem.
+    </p>
+    <a href="/assets/images/2025/0702/02.png"><img src="/assets/images/2025/0702/02.png"></a>
+</section>
+
+<section>
+    <h2 id="dfs-and-shares">dfs and shares</h2>
+    <p>
+        <i>What do the DFS namespaces look like?</i>
+        <br>
+        One namespace and folders within, easy enough.
+    </p>
+    <a href="/assets/images/2025/0702/03.png"><img src="/assets/images/2025/0702/03.png"></a>
+    <p>
+        <i>What about the folder targets, and how are they accessed?</i>
+        <br>
+        The Reno office only accesses the <b>reno</b> DFS folder target. Similarly, the Vegas office only accesses the <b>vegas</b> DFS folder target.
+    </p>
+    <a href="/assets/images/2025/0702/04.png"><img src="/assets/images/2025/0702/04.png"></a>
+</section>
+
+<section>
+    <h2 id="referral-ordering">referral ordering</h2>
+    <p>
+        My friend had already found the DFS folder target "Advanced" configuration to override referral ordering. Given how the DFS folder targets were being accessed, this
+        was going to be the quick and dirty fix for his issue. The <b>reno</b> folder on <b>fs01</b> would be first priority among all targets. The <b>vegas</b> folder
+        on <b>fs02</b> would be first priority among all targets. Now this <i>only</i> works because of the use case presented here. If for some reason users in Reno were
+        accessing the <b>vegas</b> DFS folder target, they would likely complain that doing so is slow.
+    </p>
+    <a href="/assets/images/2025/0702/05.png"><img src="/assets/images/2025/0702/05.png"></a>
+    <a href="/assets/images/2025/0702/06.png"><img src="/assets/images/2025/0702/06.png"></a>
+    <p>
+        Time to test. I dropped my Windows 11 client on the Reno network and accessed the <b>vegas</b> DFS folder target. As expected, the folder was served from <b>fs02</b>,
+        the file server in Vegas even though <b>fs01</b> which exists in the same site and subnet as the client also has this folder target configured in an enabled state.
+        Run <b>dfsutil.exe /pktflush</b> any number of times and the folder target remains on the same server so long as it is available.
+    </p>
+    <a href="/assets/images/2025/0702/07.png"><img src="/assets/images/2025/0702/07.png"></a>
+</section>
+
+<section>
+    <h2 id="inter-site-transports">inter-site transports</h2>
+    <p>
+        <i>How do we fix this properly?</i>
+        <br>
+        We can start with reverting the referral ordering for DFS folder targets back to the default state, then Inter-Site Transports need some attention. We worked out
+        where network links exist between sites and determined the speed for each of the links. The table below outlines what we had to work with.
+    </p>
+    <table>
+        <tr>
+            <th>Link</th>
+            <th>Mbit/s</th>
+        </tr>
+        <tr>
+            <td>Carson ◄--► Reno</td>
+            <td>155</td>
+        </tr>
+        <tr>
+            <td>Elko ◄--► Vegas</td>
+            <td>155</td>
+        </tr>
+        <tr>
+            <td>Carson ◄--► Elko</td>
+            <td>51</td>
+        </tr>
+        <tr>
+            <td>Carson ◄--► Vegas</td>
+            <td>6.3</td>
+        </tr>
+        <tr>
+            <td>Elko ◄--► Reno</td>
+            <td>6.3</td>
+        </tr>
+    </table>
+    <p>
+        T-2... what year is this?! At any rate, we created IP links with costs that reflected the speeds of the links, associated the sites exactly as you would expect,
+        then removed the <b>DEFAULTSITELINK</b>. Below is what the IP Inter-Site Transport configuration looks like now. Following this change DFS namespaces and folder
+        targets are served just as Bill Gates intended;  based upon the "cost" of getting <i>to</i> the file server.
+    </p>
+    <a href="/assets/images/2025/0702/08.png"><img src="/assets/images/2025/0702/08.png"></a>
+    <p>
+        <i>Wait... how do you configure cost for OneDrive?</i>
+        <br>
+        There are things we will never know.
+    </p>
+</section>
+</div>
+
+<div class="footer">
+    <a href="/blog/2025/0711.html">◄-2025.07.11</a><b>...</b><a href="/blog/2025/0519.html">2025.05.19-►</a>
+</div>
+
+</body>
+</html>

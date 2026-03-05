@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.08.04</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="dhcp, dns, windows">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#stand-alone">stand-alone</a>
+    <a href="#setup">setup</a>
+    <a href="#dns" style="font-size: 12pt;">- dns</a>
+    <a href="#dhcp" style="font-size: 12pt;">- dhcp</a>
+    <a href="#testing">testing</a>
+    <a href="#non-domain" style="font-size: 12pt;">- non-domain</a>
+    <a href="#domain-joined" style="font-size: 12pt;">- domain joined</a>
+    <a href="#digging-deeper">digging deeper</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.08.04</h1>
+    <h2 id="stand-alone">stand-alone</h2>
+    <p>
+        There are a variety of reasons why you would have a "stand-alone" (non-domain joined) Windows server in your environment. Your root certificate authority,
+        for instance, <i>should</i> be non-domain joined (in addition to being almost always powered down). Servers which exist in your "DMZ" <i>might</i> be
+        "stand-alone" as well. DNS? Circumstantially, sure. DHCP?... okay, that's a new one. Why would you <i>not</i> want a DHCP server joined to your domain?
+    </p>
+    <p>
+        I was recently doing some pro bono consulting for a friend who manages a small environment. In their implementation, Active Directory is hosted offsite and
+        managed entirely by an MSP. This service provider is <i>very</i> protective of the AD infrastructure and outright refuses to authorize a DHCP server in
+        Active Directory for fear of poisoning DNS with superfluous records produced by client leases from phones, tablets, and other non-domain joined devices.
+    </p>
+    <p>
+        <i>"Wait. You could just disable dynamic updates at the scope or even the server level, right?"</i>
+        <br>
+        You absolutely could.
+    </p>
+    <p>
+        <i>"Just do that then?"</i>
+        <br>
+        Tried. They would not go for it.
+    </p>
+    <p>
+        Okay... stand-alone DHCP server it is. Well it turns out this server is also going to run DNS for the sake of caching and ensuring that DNS queries for
+        records in the AD domain forward lookup zone are sent to the most efficient (closest) domain controller. As you are probably starting to imagine, the
+        environment is a single, flat Active Directory domain which spans a few states.
+    </p>
+    <p>
+        <i>To the lab!</i>
+    </p>
+</section>
+
+<section>
+    <h2 id="setup">setup</h2>
+    <p>
+        I designed a small environment in my lab to recreate the scenario as it had been explained to me; both DCs and the windows client are joined to domain
+        <b>lab.local</b> while <b>ns03</b> would <u>not</u> be joined to the domain. Looks good on paper... I created the AD forest on the first domain controller
+        then added the second DC to the domain.
+    </p>
+    <table>
+        <tr>
+            <th>Node</th>
+            <th>IP Address</th>
+            <th>Role</th>
+        </tr>
+        <tr>
+            <td>dc01</td>
+            <td>192.168.1.10</td>
+            <td>"close" DC</td>
+        </tr>
+        <tr>
+            <td>dc02</td>
+            <td>192.168.2.10</td>
+            <td>"far" DC</td>
+        </tr>
+        <tr>
+            <td>ns03</td>
+            <td>192.168.3.10</td>
+            <td>stand-alone DHCP & DNS</td>
+        </tr>
+        <tr>
+            <td>ws03</td>
+            <td>192.168.3.100</td>
+            <td>domain client</td>
+        </tr>
+    </table>
+    <br>
+    <p>
+        A PowerShell one-liner installs the DHCP and DNS roles on the <b>ns03</b> along with the accompanying management tools.
+    </p>
+    <pre>
+        <code>
+Install-WindowsFeature dhcp,dns -IncludeManagementTools
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0804/01.png"><img src="/assets/images/2025/0804/01.png"></a>
+    <h3 id="dns">dns</h3>
+    <p>
+        With the role installed, the DNS server is configured via the PowerShell code below using only the "close" DC for forwarded DNS queries. Root hints are
+        disabled... because it is 2025.
+    </p>
+    <pre>
+        <code>
+Set-DnsServerForwarder -UseRootHint:$false -IPAddress 192.168.1.10
+Get-DnsServerForwarder
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0804/02.png"><img src="/assets/images/2025/0804/02.png"></a>
+    <h3 id="dhcp">dhcp</h3>
+    <p>
+        DHCP is then configured using the PowerShell code below. The registry entry will forcibly "complete" the DHCP post-installation configuration.
+    </p>
+    <pre>
+        <code>
+Set-ItemProperty –Path HKLM:\SOFTWARE\Microsoft\ServerManager\Roles\12 –Name ConfigurationState –Value 2
+Add-DhcpServerv4Scope -Name vlan3 -StartRange 192.168.3.100 -EndRange 192.168.3.200 -State Active -SubnetMask 255.255.255.0
+Set-DhcpServerv4OptionValue -ScopeId 192.168.3.0 -OptionId 3 -Value '192.168.3.1'
+Set-DhcpServerv4OptionValue -ScopeId 192.168.3.0 -OptionId 6 -Value '192.168.3.10' -Force
+        </code>
+    </pre>
+</section>
+
+<section>
+    <h2 id="testing">testing</h2>
+    <p>
+        With the minimalist, stand-alone DHCP & DNS server configured, it is time to test with these desired outcomes in mind.
+    </p>
+    <ul>
+        <li>A non-domain joined device should receive a DHCP lease, but <i>not</i> update its record in the <b>lab.local</b> DNS zone.</li>
+        <li>A Windows desktop on the <b>192.168.3.0/24</b> network should resolve and be able to join the <b>lab.local</b> domain.</li>
+        <li>A domain joined Windows desktop on on the <b>192.168.3.0/24</b> network should dynamically update its record in the <b>lab.local</b> DNS zone.</li>
+    </ul>
+    <h3 id="non-domain">non-domain</h3>
+    <p>
+        Starting with a fresh installation of Windows 11, I confirmed that the client receives a DHCP lease from the stand-alone server. Good start.
+    </p>
+    <a href="/assets/images/2025/0804/03.png"><img src="/assets/images/2025/0804/03.png"></a>
+    <p>
+        Now, this desktop has yet to join the <b>lab.local</b> domain, so registering the DNS client should <i>not</i> succeed...
+    </p>
+    <a href="/assets/images/2025/0804/04.png"><img src="/assets/images/2025/0804/04.png"></a>
+    <p>
+        ...Which does not.
+    </p>
+    <a href="/assets/images/2025/0804/05.png"><img src="/assets/images/2025/0804/05.png"></a>
+    <h3 id="domain-joined">domain joined</h3>
+    <p>
+        The desktop should be able to join the domain, which it can.
+    </p>
+    <a href="/assets/images/2025/0804/06.png"><img src="/assets/images/2025/0804/06.png"></a>
+    <p>
+        The now domain-joined desktop should successfully register its DNS client in the <b>lab.local</b> zone, which it also can.
+    </p>
+    <a href="/assets/images/2025/0804/07.png"><img src="/assets/images/2025/0804/07.png"></a>
+    <br>
+    <a href="/assets/images/2025/0804/08.png"><img src="/assets/images/2025/0804/08.png"></a>
+</section>
+
+<section>
+    <h2 id="digging-deeper">digging deeper</h2>
+    <p>
+        Some would be perfectly content to call this mission a success, take the W, and stop thinking about it. Our goals have been achieved after all, right?
+        But <i>how</i> is this working? The stand-alone DNS server <b>ns03</b> hosts no forward lookup zones. The Windows 11 desktop <b>ws03</b> is configured to
+        <i>use</i> the stand-alone DNS server for DNS queries, you might expect the dynamic DNS update to be sent from <b>ws03</b> to <b>ns03</b> where the
+        process would just fail. This is a job for Wireshark.
+    </p>
+    <p style="font-size: 7pt;">
+        Yes... you could also just read the documentation, but this will be more interesting. Stick with me here.
+    </p>
+    <p>
+        With Wireshark capturing on <b>ns03</b> I fired off another DNS dynamic update from <b>ws03</b> which produced DNS queries where the desktop is trying to
+        find the SOA for its FQDN. So the dynamic update process cares about the SOA, that makes sense right? The desktop <i>should</i> ensure
+        that it is sending the dynamic update to a server that can actually <i>do</i> something with it. Once <b>ws03</b> has the SOA information, it is
+        likely sending the dynamic update directly <i>to</i> the SOA, which in this case is <b>dc01.lab.local</b>. But why speculate when you can <u>know</u>.
+    </p>
+    <a href="/assets/images/2025/0804/09.png"><img src="/assets/images/2025/0804/09.png"></a>
+    <p>
+        Take two. With Wireshark capturing on <b>ws03</b> I ran <i>another</i> DNS update. "Dynamic update", that's what I was looking for. Exactly as
+        theorized, the desktop is requesting the SOA for <b>ws03.lab.local</b> so that it can send the dynamic update directly to that server.
+    </p>
+    <a href="/assets/images/2025/0804/10.png"><img src="/assets/images/2025/0804/10.png"></a>
+    <p>
+        So, we know that a stand-alone DHCP and DNS server will function as expected when placed in an otherwise domain-joined client/server environment. We also
+        know <i>how</i> the dynamic DNS update process works when performed from a domain-joined Windows desktop. What are we missing? Right! The non-domain joined
+        desktop. Why does the dynamic DNS update process <u>fail</u> when performed on the desktop <i>before</i> it was joined to the domain?
+    </p>
+    <p>
+        By default, any AD integrated DNS zone only allows secure dynamic updates, this is easily verified by examining the DNS zone configuration. In the simplest terms,
+        this means that a client requesting a DNS dynamic update must exist in AD and have permissions which allow updating its DNS record. Microsoft has a good
+        article on <a href="https://learn.microsoft.com/en-us/windows-server/networking/dns/dynamic-update#protocol-overview">RFC 2136</a> which covers
+        the <b>UPDATE</b> message format. The article also includes detailed information on
+        <a href="https://learn.microsoft.com/en-us/windows-server/networking/dns/dynamic-update#how-secure-dynamic-update-works">how secure dynamic update works</a>.
+    </p>
+    <a href="/assets/images/2025/0804/11.png"><img src="/assets/images/2025/0804/11.png"></a>
+    <p>
+        Some while ago, the aforementioned friend and I were talking about advice for up-and-coming IT professionals seeking sysadmin or engineering roles. My friend
+        brought up a point that behind any seemingly "simple" process, there is an RFC and with it, untold levels of complexity that is often taken for granted. This
+        is a really good example of two "simple" technologies, DHCP and DNS, which are frequently categorized as <i>set it and forget it</i> components of an environment.
+        Strive to understand the <i>how</i> and the <i>why</i> behind the things you are responsible for managing.
+    </p>
+    <p>
+        <i>"The important thing is not to stop questioning. Curiosity has its own reason for existing."</i>
+        <br>
+        - Albert Einstein
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2025/0811.html">◄-2025.08.11</a><b>...</b><a href="/blog/2025/0714.html">2025.07.14-►</a>
+</div>
+
+</div>
+</body>
+</html>

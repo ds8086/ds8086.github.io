@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.07.11</title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="exchange, windows">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#quick-exchange">quick exchange</a>
+    <a href="#materials" style="font-size: 12pt;">- materials</a>
+    <a href="#plan" style="font-size: 12pt;">- plan</a>
+    <a href="#ad-prep">ad prep</a>
+    <a href="#exchange-install">exchange install</a>
+    <a href="#dag">dag</a>
+    <a href="#dag" style="font-size: 12pt;">- cno</a>
+    <a href="#dag-creation" style="font-size: 12pt;">- dag creation</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.07.11</h1>
+    <h2 id="quick-exchange">quick exchange</h2>
+    <p>
+        Microsoft <a href="https://techcommunity.microsoft.com/blog/exchange/exchange-server-subscription-edition-se-is-now-available/4424924">recently announced</a> the release
+        of Exchange SE as the in-place "upgrade" for Exchange 2019 CU14+ and come this October, Exchange SE will be the <i>only</i> supported version of on-premises Exchange. The
+        <a href="https://techcommunity.microsoft.com/blog/exchange/why-%E2%80%9Cin-place-upgrade%E2%80%9D-from-exchange-2019-to-exchange-se-is-low-risk/4410173">Exchange Team Blog</a>
+        has cited upgrading from Exchange 2019 to Exchange SE RTM as low risk as there are no code changes and this upgrade is just paving the way for future updates released
+        for SE. I am stunned that Microsoft even offers on-premises Exchange these days, but since they do, I figure why not build Exchange 2019 in my home lab and see just how
+        "low risk" the upgrade to SE really is.
+    </p>
+    <p>
+        The thought of clicking through <i>all</i> of those GUI screens. No, I refuse. It is 2025 and I shall not interact with a GUI during this effort. Not for the OS
+        and certainly not for Exchange. So on-premises Exchange... what do we need and what is the plan?
+    </p>
+    <h3 id="materials">materials</h3>
+    <ul>
+        <li>Domain controller (lab.local)</li>
+        <li>2 VMs for Exchange (<b>ex01</b> & <b>ex02</b>)</li>
+        <li>1 VM for File Share witness (<b>fs01</b>)</li>
+        <li>Exchange 2019 CU14 iso</li>
+        <li>Exchange SE iso</li>
+        <li>vcredist (2012 & 2013)</li>
+        <li>IIS URL rewrite module</li>
+    </ul>
+    <h3 id="plan">plan</h3>
+    <ol>
+        <li>Prep AD for Exchange 2019</li>
+        <li>Install 2019 on <b>ex01</b></li>
+        <li>Install 2019 on <b>ex02</b></li>
+        <li>Make a DAG</li>
+        <li>Upgrade Exchange on <b>ex01</b></li>
+        <li>Upgrade Exchange on <b>ex02</b></li>
+    </ol>
+</section>
+
+<section>
+    <h2 id="ad-prep">ad prep</h2>
+    <p>
+        What was once common knowledge is now anything but. I wonder how many sysadmins out there have never even <i>seen</i> on-premises Exchange... Anyway, mount the Exchange
+        2019 iso on your domain controller and run the code below. This will install AD Domain Services management tools and prep the domain for Exchange 2019 to exist. The
+        assumption here is that the Exchange iso is mounted as <b>D:\</b>.
+    </p>
+    <pre>
+        <code>
+Install-WindowsFeature -Name RSAT-ADDS-Tools
+D:\Setup.exe /IAcceptExchangeServerLicenseTerms_DiagnosticDataOff /PrepareAD /OrganizationName:"Lab"
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0711/01.png"><img src="/assets/images/2025/0711/01.png"></a>
+</section>
+
+<section>
+    <h2 id="exchange-install">exchange install</h2>
+    <p>
+        As with all things Microsoft, there are prerequisites for Exchange 2019 but with a bit of planning ahead, you can avoid failing the prerequisite check over and over
+        during the installation. I placed the Visual C++ Redistributable installers and the URL Rewrite Module installer in <b>C:\prereq\</b> as shown below and the Exchange 2019
+        iso is mounted as <b>D:\</b> on what will become the first Exchange server in the environment; <b>ex01</b>.
+    </p>
+    <a href="/assets/images/2025/0711/02.png"><img src="/assets/images/2025/0711/02.png"></a>
+    <p>
+        This script will do <i>everything</i> in the order required. All installers fire off in passive mode. Why? Because what is life without progress (bars)? Once  past the
+        prerequisites analysis it <i>should</i> should be safe to step away for lunch.
+    </p>
+    <pre>
+        <code>
+# Stopwatch
+$sw = New-Object -TypeName System.Diagnostics.Stopwatch
+$sw.Start()
+
+# Visual C++ redistributables
+(ls C:\prereq\vcredist*.exe).FullName | % { Start-Process -FilePath $_ -ArgumentList "/install /passive /norestart" -Wait }
+
+# Windows features
+Install-WindowsFeature Server-Media-Foundation, NET-Framework-45-Core, NET-Framework-45-ASPNET, NET-WCF-HTTP-Activation45, NET-WCF-Pipe-Activation45, NET-WCF-TCP-Activation45, NET-WCF-TCP-PortSharing45, RPC-over-HTTP-proxy, RSAT-Clustering, RSAT-Clustering-CmdInterface, RSAT-Clustering-PowerShell, WAS-Process-Model, Web-Asp-Net45, Web-Basic-Auth, Web-Client-Auth, Web-Digest-Auth, Web-Dir-Browsing, Web-Dyn-Compression, Web-Http-Errors, Web-Http-Logging, Web-Http-Redirect, Web-Http-Tracing, Web-ISAPI-Ext, Web-ISAPI-Filter, Web-Metabase, Web-Mgmt-Service, Web-Net-Ext45, Web-Request-Monitor, Web-Server, Web-Stat-Compression, Web-Static-Content, Web-Windows-Auth, Web-WMI, RSAT-ADDS
+
+# URL rewrite module
+Start-Process msiexec.exe -ArgumentList "/i C:\prereq\rewrite_amd64_en-US.msi /passive /norestart" -Wait
+
+# Unified communications managed API
+Start-Process D:\UCMARedist\Setup.exe -ArgumentList "/passive /norestart" -Wait
+
+# Exchange install
+D:\Setup.exe /m:Install /r:mb /on:"Lab" /IAcceptExchangeServerLicenseTerms_DiagnosticDataOff
+
+# Exchange in under an hour?
+$sw.Stop()
+$sw
+        </code>
+    </pre>
+    <p>
+        Look at that; Exchange installed in under an hour.
+    </p>
+    <a href="/assets/images/2025/0711/03.png"><img src="/assets/images/2025/0711/03.png"></a>
+    <p>
+        The same exact process and script is used to install Exchange 2019 on <b>ex02</b>. Before doing that, how about a quick check to make sure mail is actually flowing.
+        Running the script below from <b>ex01</b> will send an email to the built-in Administrator mailbox, create and connect to a PS session for Exchange management, and
+        finally pull the tracking log for the test message.
+    </p>
+    <pre>
+        <code>
+# We get signal
+$Mail = @{
+    'To' = 'Administrator@lab.local'
+    'From' = 'Cats@lab.local'
+    'Subject' = 'How are you gentlemen?'
+    'Body' = 'All your base are belong to us.'
+    'SmtpServer' = 'Localhost'
+    'Port' = 25
+}
+Send-MailMessage @Mail
+
+# Exchange PS session
+$Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri http://ex01.lab.local/PowerShell/ -Authentication Kerberos
+Import-PSSession $Session -DisableNameChecking
+
+# Tracking log
+Get-MessageTrackingLog -Sender 'cats@lab.local'
+        </code>
+    </pre>
+    <p>
+        It <i>seems</i> like mail is flowing...
+    </p>
+    <a href="/assets/images/2025/0711/04.png"><img src="/assets/images/2025/0711/04.png"></a>
+    <p>
+        ...which is confirmed via OWA.
+    </p>
+    <a href="/assets/images/2025/0711/05.png"><img src="/assets/images/2025/0711/05.png"></a>
+    <p>
+        Another hour yields another Exchange server and it's time to make a DAG.
+    </p>
+    <a href="/assets/images/2025/0711/06.png"><img src="/assets/images/2025/0711/06.png"></a>
+</section>
+
+<section>
+    <h2 id="dag">dag</h2>
+    <h3 id="cno">cno</h3>
+    <p>
+        Creating a DAG <i>also</i> has a prerequisite task; the creation of a cluster name object (CNO). This could easily be achieved via ADUC, arguably more easily than via
+        PowerShell, but seeing as we have come this far, let's stick with the theme. The code below will create a CNO named <b>dag01</b> and assign full access permissions
+        to the AD computer objects <b>ex01</b> and <b>ex02</b>.
+    </p>
+    <pre>
+        <code>
+# Create the DAG CNO
+New-ADComputer -Name dag01 -Enabled:$false
+
+# Pull ACL for CNO
+Set-Location AD:\
+$dag = 'AD:\CN=dag01,CN=Computers,DC=lab,DC=local'
+$acl = Get-Acl $dag
+
+# Exchange server SIDs
+$exs = (Get-ADComputer -Filter { Name -like "ex0*"}).SID
+
+# Update ACL with ACEs for each Exchange servers
+$exs | ForEach-Object {
+    $IdentityReference = $_
+    $ActiveDirectoryRights = "GenericAll"
+    $AccessControlType = "Allow"
+    $ObjectType = "00000000-0000-0000-0000-000000000000"
+    $InheritenceType = "All"
+    $InheritedObjectType = "00000000-0000-0000-0000-000000000000"
+
+    $ace = New-Object System.DirectoryServices.ActiveDirectoryAccessRule(
+        $IdentityReference,
+        $ActiveDirectoryRights,
+        $AccessControlType,
+        $ObjectType,
+        $InheritenceType,
+        $InheritedObjectType
+    )
+    $acl.AddAccessRule($ace)
+}
+
+# Set the updated ACL
+Set-Acl -AclObject $ACL -Path $dag
+
+# Verify the updated ACL
+(Get-ACL $dag).Access | Where-Object {$_.IdentityReference -like "LAB\EX0*"}
+        </code>
+    </pre>
+    <p>
+        Permissions are present now to actually <i>make</i> the DAG...
+    </p>
+    <a href="/assets/images/2025/0711/07.png"><img src="/assets/images/2025/0711/07.png"></a>
+    <h3 id="dag-creation">dag creation</h3>
+    <p>
+        ...after just <i>one more</i> prerequisite. The AD group <b>Exchange Trusted Subsystem</b> must be a member of the local administrators group on <b>fs01</b> in order
+        to <i>create</i> the DAG. The code below is executed on <b>fs01</b> to both perform and then verify the group membership change.
+    </p>
+    <pre>
+        <code>
+Add-LocalGroupMember -Group 'administrators' -Member 'lab\Exchange Trusted Subsystem'
+Get-LocalGroupMember -Group 'administrators'
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0711/08.png"><img src="/assets/images/2025/0711/08.png"></a>
+    <p>
+        <u>Now</u> the DAG can be created. The code below is executed on <b>ex01</b> it will create the DAG, add the server to it, and bounce the Exchange Information Store
+        process, which is required after adding a mailbox server to a DAG.
+    </p>
+    <pre>
+        <code>
+New-DatabaseAvailabilityGroup -Name dag01 -WitnessServer fs01 -WitnessDirectory C:\dag01
+Add-DatabaseAvailabilityGroupServer -Identity dag01 -MailboxServer ex01
+Get-Service -DisplayName 'Microsoft Exchange Information Store' | Restart-Service
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0711/09.png"><img src="/assets/images/2025/0711/09.png"></a>
+    <p>
+        As expected, the code below is then executed to add <b>ex02</b> to the DAG.
+    </p>
+    <pre>
+        <code>
+Add-DatabaseAvailabilityGroupServer -Identity dag01 -MailboxServer ex02
+Invoke-Command -computername ex02 -ScriptBlock { Restart-Service -Name MSExchangeIS }
+        </code>
+    </pre>
+    <p>
+        <i>Invoked commands? How fancy!</i>
+        <br>
+        Any errors are likely due to WMI connectivity, PowerShell remoting config, or firewall(s). Your mileage may vary. Into the homestretch for DAG creation... The idea for
+        my lab setup is that each mailbox server will host <u>both</u> mailbox databases which were created automatically during the initial Exchange installations. What were
+        the mailbox database names again? Figure that out, then run some code to add mailbox database copies for each database on the "opposite" mailbox server and bounce the
+        Exchange Information Store on each server <i>again</i>.
+    </p>
+    <pre>
+        <code>
+Get-MailboxDatabase
+Add-MailboxDatabaseCopy 'Mailbox Database 0037134937' -MailboxServer EX01
+Add-MailboxDatabaseCopy 'Mailbox Database 0105541960' -MailboxServer EX02
+Restart-Service -Name MSExchangeIS
+Invoke-Command -ComputerName ex02 { Restart-Service -Name MSExchangeIS }
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0711/10.png"><img src="/assets/images/2025/0711/10.png"></a>
+    <p>
+        Just a <i>bit</i> more code... The block below sets the datacenter activation for and then starts the DAG.
+    </p>
+    <pre>
+        <code>
+Set-DatabaseAvailabilityGroup -Identity dag01 -DatacenterActivationMode DagOnly
+Start-DatabaseAvailabilityGroup -Identity dag01 -ActiveDirectorySite 'Default-First-Site-Name'
+        </code>
+    </pre>
+    <p>
+        What an <i>ordeal</i>, so much for this being quick exchange... Did I just figure out why most organizations have moved from on-premises to Exchange Online? ¯\_(ツ)_/¯
+        We would already be running Exchange SE if it weren't for the DAG setup. Anyway, in the next post I will actually get the two Exchange servers upgraded from 2019 to SE.
+        Until then, tell your Exchange online instance I said <b>EHLO</b>.
+    </p>
+</section>
+</div>
+
+<div class="footer">
+    <a href="/blog/2025/0714.html">◄-2025.07.14</a><b>...</b><a href="/blog/2025/0702.html">2025.07.02-►</a>
+</div>
+
+</body>
+</html>

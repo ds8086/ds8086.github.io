@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.08.29</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="ad, linux, samba">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#tina-iii">tina III</a>
+    <a href="#backup">backup</a>
+    <a href="#restore">restore</a>
+    <a href="#dc03" style="font-size: 12pt;">- dc03</a>
+    <a href="#validation" style="font-size: 12pt;">- validation</a>
+    <a href="#join-old" style="font-size: 12pt;">- join old</a>
+    <a href="#rsync" style="font-size: 12pt;">- rsync</a>
+    <a href="#cleanup">cleanup</a>
+    <a href="#fsmo-roles" style="font-size: 12pt;">- fsmo roles</a>
+    <a href="#demote" style="font-size: 12pt;">- demote</a>
+    <a href="#final-thoughts">final thoughts</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.08.29</h1>
+    <h2 id="tina-iii">tina III</h2>
+    <p>
+        Time for the last item on the hit list; AD backup and restore. No idea what I am talking about? Go back and read <a href="/blog/2025/0811.html" target="_blank">tina</a>
+        where I configured a Debian & Samba powered Active Directory domain controller, and <a href="/blog/2025/0822.html" target="_blank">tina II</a> where Group Policy was
+        enabled, a second DC was provisioned, and rsync was configured to mimic native SysVol replication. Otherwise, read on because you're <i>basically</i> up to speed now.
+        So, AD backup and restore... if you <i>have</i> read the AD saga thus far, you know that I have referenced the SambaWiki extensively and this post will start off
+        the same. There is <a href="https://wiki.samba.org/index.php/Back_up_and_Restoring_a_Samba_AD_DC" target=" _blank">documentation</a> covering the topic of AD
+        backup and restore including a recommended backup and restore strategy to minimize issues and downtime. 
+    </p>
+</section>
+
+<section>
+    <h2 id="backup">backup</h2>
+    <p>
+        I selected the "online" backup method for my environment and with that, created a new directory for the effort and started the process on <b>dc01</b>.
+    </p>
+    <pre>
+        <code>
+mkdir /backup
+samba-tool domain backup online --targetdir=/backup --server=DC01 -UAdministrator
+        </code>
+    </pre>
+    <p>
+        Not long after, the backup completes and the date-stamped bz2 file is shown in the backup directory. In a production environment, you would keep AD backups stored
+        securely in an "offline" fashion. Good time to dust off that LTO tape appliance, eh? Maybe that's too far... Wherever the backups are stored, ensure that you
+        can access them <i>without</i> AD authentication.
+    </p>
+    <a href="/assets/images/2025/0829/01.png"><img src="/assets/images/2025/0829/01.png"></a>
+</section>
+
+<section>
+    <h2 id="restore">restore</h2>
+    <p>
+        Just as with traditional Windows Active Directory, backup is the easy part. <i>Restore</i> on the other hand... If you thought DSRM was difficult, buckle up.
+        The <a href="https://wiki.samba.org/index.php/Back_up_and_Restoring_a_Samba_AD_DC#Recommended_strategy" target="_blank">recommended strategy</a> for restore is
+        to provision a temporary domain controller, perform the AD restore on <i>that</i> DC, then (re)join the <i>old</i> domain controllers to the now restored domain.
+        Keep in mind folks, outside of performing test restores, you would only be restoring AD from a backup in the worst of cases such as irrecoverable database
+        corruption which has been replicated, or a nuclear level security event where AD can no longer be considered trustworthy. Just like DSRM, if you are performing
+        an <i>actual</i> restore, regardless of your exact scenario, you are not having a good time.
+    </p>
+    <h3 id="dc03">dc03</h3>
+    <p>
+        To save time, I have already provisioned a new server named <b>dc03</b> with IP address <b>192.168.1.12</b>. All necessary packages have been installed, however
+        neither Samba nor any other services have been configured. I have already copied the newly created backup from <b>dc01</b> to the home directory for <b>root</b>
+        on <b>dc03</b>. With that, I <i>think</i> we are ready for the restore. The first step is to stop Samba on both of the "old" DCs, <b>dc01</b> and <b>dc02</b>.
+    </p>
+    <pre>
+        <code>
+systemctl stop samba
+        </code>
+    </pre>
+    <p>
+        The code below will create a directory for running restored Samba and then restore from the previously created backup.
+    </p>
+    <pre>
+        <code>
+mkdir /restore
+samba-tool domain backup restore --backup-file=/root/samba-backup-ad.lab.local-2025-08-26T15-38-08.772062.tar.bz2 --newservername=DC03 --targetdir=/restore
+        </code>
+    </pre>
+    <p>
+        The restore <i>seems</i> to have been successful. Let's have a look at the <b>smb.conf</b> file as the screen says.
+    </p>
+    <a href="/assets/images/2025/0829/02.png"><img src="/assets/images/2025/0829/02.png"></a>
+    <pre>
+        <code>
+cat /restore/etc/smb.conf
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0829/03.png"><img src="/assets/images/2025/0829/03.png"></a>
+    <p>
+        Looks good. Can we start Samba...
+    </p>
+    <pre>
+        <code>
+samba -s /restore/etc/smb.conf -i
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0829/04.png"><img src="/assets/images/2025/0829/04.png"></a>
+    <p>
+        ...no. Rebooting does not resolve the issue either. Looking through logs, I found errors such as <i>smb is already running</i> and <i>winbind is already running</i>.
+        Since <b>dc03</b> will be a "temporary" domain controller, I disabled and stopped Samba and its related services via the code below, then attempted to start
+        Samba again.
+    </p>
+    <pre>
+        <code>
+systemctl disable samba
+systemctl disable smb
+systemctl disable winbind
+systemctl stop samba
+systemctl stop smb
+systemctl stop winbind
+samba -s /restore/etc/smb.conf -i
+        </code>
+    </pre>
+    <p>
+        Following this, there are no errors in logs and Samba successfully starts. <i>Very nice!</i>
+    </p>
+    <a href="/assets/images/2025/0829/05.png"><img src="/assets/images/2025/0829/05.png"></a>
+    <h3 id="validation">validation</h3>
+    <p>
+        Before (re)joining the old DCs to the domain, how about a look at DNS and Active Directory in its current state? Logging into the Windows management box
+        (<b>srv01</b>), we can see that only <b>dc03</b> serves as the SOA and sole name server for the <b>ad.lab.local</b> AD integrated DNS zone.
+    </p>
+    <a href="/assets/images/2025/0829/06.png"><img src="/assets/images/2025/0829/06.png"></a>
+    <p>
+        What about ADUC? The two, previously joined domain members are still present. 
+    </p>
+    <a href="/assets/images/2025/0829/07.png"><img src="/assets/images/2025/0829/07.png"></a>
+    <p>
+        After updating the DNS client config on <b>srv01</b> to use <b>dc03</b> for lookups, I can log into the domain as expected.
+    </p>
+    <a href="/assets/images/2025/0829/08.png"><img src="/assets/images/2025/0829/08.png"></a>
+    <p>
+        What about domain controllers? As you could probably guess, only <b>dc03</b> is present.
+    </p>
+    <a href="/assets/images/2025/0829/09.png"><img src="/assets/images/2025/0829/09.png"></a>
+    <p>
+        Could this actually be <i>easier</i> than dealing with DSRM?! Is that possible? I've yet to boot anything while mashing <b>F8</b>...
+    </p>
+    <h3 id="join-old">join old</h3>
+    <p>
+        Three lines of code joins the old DCs back to the domain.
+    </p>
+    <pre>
+        <code>
+echo "nameserver 192.168.1.12" > /etc/resolv.conf
+samba-tool domain join ad.lab.local DC -U "AD\administrator"
+systemctl start samba
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0829/10.png"><img src="/assets/images/2025/0829/10.png"></a>
+    <p>
+        Once the DCs are joined back to the domain, their respective <b>resolv.conf</b> files are updated <i>back</i> to using their own IP address for DNS resolution.
+    </p>
+    <h3 id="rsync">rsync</h3>
+    <p>
+        Setting up SysVol replication via <b>rsync</b> is the same process outlined in the <a href="/blog/2025/0822.html#replication" target="_blank">replication</a>
+        section of my previous post with these minor modifications.
+    </p>
+    <ul>
+        <li>The Built-In User & Group ID Mappings for <b>dc03</b> lives in <b>/restore/private/idmap.ldb</b></li>
+        <li><b>dc03</b> will act as the <b>rsync</b> "server" and <b>dc01</b> the temporary client</li>
+    </ul>
+    <p>
+        With SysVol replication in place, the restore process is technically complete. <b>\o/</b>
+    </p>
+    <a href="/assets/images/2025/0829/11.png"><img src="/assets/images/2025/0829/11.png"></a>
+</section>
+
+<section>
+    <h2 id="cleanup">cleanup</h2>
+    <h3 id="fsmo-roles">fsmo roles</h3>
+    <p>
+        Currently <b>dc03</b> holds all FSMO roles, which is confirmed by running the code below.
+    </p>
+    <pre>
+        <code>
+samba-tool fsmo show
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0829/12.png"><img src="/assets/images/2025/0829/12.png"></a>
+    <p>
+        The roles are easily moved <i>back</i> to <b>dc01</b>.
+    </p>
+    <pre>
+        <code>
+samba-tool fsmo transfer --role=all --username=Administrator
+samba-tool fsmo show
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0829/13.png"><img src="/assets/images/2025/0829/13.png"></a>
+    <h3 id="demote">demote</h3>
+    <p>
+        The last step is to demote <b>dc03</b>. <i>I hardly knew ye'.</i> The code below is executed directly on <b>dc03</b>.
+    </p>
+    <pre>
+        <code>
+samba-tool domain demote -s /restore/etc/smb.conf --username=Administrator
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0829/14.png"><img src="/assets/images/2025/0829/14.png"></a>
+    <p>
+        A wall of green text ending with <i>Demote successful</i> and the DC is automatically removed from the domain.
+    </p>
+    <a href="/assets/images/2025/0829/15.png"><img src="/assets/images/2025/0829/15.png"></a>
+</section>
+
+<section>
+    <h2 id="final-thoughts">final thoughts</h2>
+    <p>
+        This has been an interesting experience and I could definitely think of some use cases for a Samba powered AD environment.
+    </p>
+    <ul>
+        <li>Test environments where Windows licensing is unavailable.</li>
+        <li>SOHO or branch offices with very basic AD requirements.</li>
+        <li>Central authentication for small, air gap networks.</li>
+    </ul>
+    <p>
+        <i>"So what's next?"</i>
+    </p>
+    <p>
+        Short answer: not sure. Samba <i>technically</i> supports higher domain and forest functionality levels, but it is listed as a "work in progress" according to
+        the SambaWiki. It could be fun to upgrade functionality and see if I can get modern Exchange to integrate with Samba AD. At some point I would like to
+        author a "one-shot" bash script to quickly generate a Samba AD environment. I have something similar written in PowerShell for Windows servers. Honestly, I have
+        accomplished everything I originally planned in this effort. I've documented the process in my dark little corner of the internet. What else is there to say?
+    </p>
+    <p>
+        The music has stopped, and I can Samba no more.
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2025/0912.html">◄-2025.09.12</a><b>...</b><a href="/blog/2025/0822.html">2025.08.22-►</a>
+</div>
+
+</div>
+</body>
+</html>

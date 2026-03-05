@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2026.02.07</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="copilot, paint, windows">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#paint">paint</a>
+    <a href="#tools">tools</a>
+    <a href="#erase" style="font-size: 12pt;">- erase</a>
+    <a href="#creator" style="font-size: 12pt;">- creator</a>
+    <a href="#previously">previously</a>
+    <a href="#final-thoughts">final thoughts</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2026.02.07</h1>
+    <h2 id="paint">paint</h2>
+    <p>
+        Copilot; the AI is quickly becoming inescapable in the Microsoft landscape. Several products have undergone re-branding in order to
+        shoehorn <i>copilot</i> into the name. Lenovo has rearranged their keyboards to make room for the new dedicated copilot key. If you
+        have "upgraded" to Windows 11 you will find copilot in the latest iteration of notepad and even paint. What would Ballmer say?
+    </p>
+    <p>
+        I was recently linked to a <a href="https://x.com/linusgsebastian/status/2015948530578587699" target="_blank">post on X</a> citing
+        a Microsoft sign-in prompt while attempting to use paint. I don't know the full story here, I'm not actually <i>on</i> X.†
+        It did set me on a quest to recreate the reported issue. I was curious, what did this individual <i>do</i> which led to the sign-in prompt?
+    </p>
+    <a href="/assets/images/2026/0207/01.png"><img src="/assets/images/2026/0207/01.png"></a>
+</section>
+
+<section>
+    <h2 id="tools">tools</h2>
+    <h3 id="erase">erase</h3>
+    <p>
+        I made that picture using paint in Windows 11. When I launched paint, I was not hit with a Microsoft sign-in prompt. I used the
+        newly incorporated <i>Generative erase</i> and <i>Remove background</i> tools and did so without entering Microsoft credentials.
+        As for the tools, they work about as well you'd expect. Operating system aside, it's paint, keep expectations low.
+    </p>
+    <a href="/assets/images/2026/0207/02.png"><img src="/assets/images/2026/0207/02.png"></a>
+    <p>
+        I ran <a href="https://learn.microsoft.com/en-us/sysinternals/downloads/process-explorer" target="_blank">ProcessExplorer</a> while
+        using the <i>Generative erase</i> and <i>Remove background</i> tools. I wanted to see if any child processes were spawned by paint
+        or if any packets left my machine because of paint. There was no network traffic, I even disabled my network interface and verified
+        that the two "erase" tools still functioned. What about the last new tool?
+    </p>
+    <a href="/assets/images/2026/0207/03.png"><img src="/assets/images/2026/0207/03.png"></a>
+    <h3 id="creator">creator</h3>
+    <p>
+        There's the sign-in prompt! It makes sense though, generating an image is completely different than erasing bits of an existing
+        one. This <i>must</i> connect to a generative AI service so as you would expect, clicking <b>sign-in</b> generates network traffic...
+        from <i>paint</i>. What a time to be alive...
+    </p>
+    <a href="/assets/images/2026/0207/04.png"><img src="/assets/images/2026/0207/04.png"></a>
+    <a href="/assets/images/2026/0207/05.png"><img src="/assets/images/2026/0207/05.png"></a>
+    <a href="/assets/images/2026/0207/06.png"><img src="/assets/images/2026/0207/06.png"></a>
+    <p>
+        ...Oh Microsoft expects <i>money</i> for this feature. Not doing that!
+    </p>
+    <a href="/assets/images/2026/0207/07.png"><img src="/assets/images/2026/0207/07.png"></a>
+    <p>
+        Let's use <a href="https://perchance.org/ai-text-to-image-generator" target="_blank">perchance</a> instead. How about Bill Gates
+        riding Nyan cat, done in the chibi art style?
+    </p>
+    <a href="/assets/images/2026/0207/08.png"><img src="/assets/images/2026/0207/08.png"></a>
+    <p>
+        <i>Fantastic</i>
+    </p>
+</section>
+
+<section>
+    <h2 id="previously">previously</h2>
+    <p>
+        In all previous iterations of Windows, you'd find <b>mspaint.exe</b> and its corresponding MUI file in <b>System32</b>. Hopefully
+        you have kept installation media for your favorite deprecated Windows OS...
+    </p>
+    <a href="/assets/images/2026/0207/09.png"><img src="/assets/images/2026/0207/09.png"></a>
+    <p>
+        ...those applications still run on Windows 11. Behold paint, circa 2009. Feast your eyes on that <i>classic</i> task manager running
+        in the Windows 11 Night Sky contrast theme. I have to give Microsoft credit; the high contrast themes in Windows 11 are on-point.
+    </p>
+    <a href="/assets/images/2026/0207/10.png"><img src="/assets/images/2026/0207/10.png"></a>
+    <a href="/assets/images/2026/0207/11.png"><img src="/assets/images/2026/0207/11.png"></a>
+</section>
+
+<section>
+    <h2 id="final-thoughts">final thoughts</h2>
+    <p>
+        I had originally planned on copying executable and MUI files from Windows 10 for this demo. I even provisioned a Windows 10 machine in my
+        lab. This. <i>This</i> is the operating system which everyone misses? Just look at the bloatware Windows 10 would install had
+        I given the machine internet access. Was Windows 10 better than 11? Yes. Does that make it <i>good</i>? No.
+    </p>
+    <a href="/assets/images/2026/0207/12.png"><img src="/assets/images/2026/0207/12.png"></a>
+    <p>
+        I bring up Windows 7 more often than I probably should. It dates me. It makes me feel like an old man yelling at clouds. However, it is
+        not without good reason; Windows 7 was <u>peak</u> Microsoft desktop OS in my opinion. It booted in seconds, it was performant, and most
+        importantly, it was an OS stripped to the <i>bone</i>. While you can <i>make</i> Windows 10 good, good out-of-the-box it was not. You can
+        even <a href="https://github.com/ds8086/Windows11" target="_blank">make Windows 11 tolerable</a> but tolerable is not <i>good</i>.
+    </p>
+    <p>
+        Back when I was charged with deploying Windows 7 en masse, the first modifications to the base OS were <u>additions</u>; drivers,
+        applications, and customization. With Windows 10, there was a paradigm shift. The first task had now become execution of a debloat or
+        "decrapifier" script on your freshly installed Windows OS. Windows 11 is a furtherance of this mindset... except with the added bloat of AI
+        and less control granted to administrators.
+    </p>
+    <p>
+        Microsoft recently published
+        <a href="https://blogs.windows.com/windows-insider/2026/01/09/announcing-windows-11-insider-preview-build-26220-7535-dev-beta-channels" target="_blank">an article</a>
+        stating that copilot will soon be removable via an admin controlled policy on Windows 11 Enterprise, Pro, and Educational SKUs. Even more recently,
+        <a href="https://www.theverge.com/tech/870045/microsoft-windows-11-issues-rebuilding-trust-notepad" target="_blank">The Verge</a> has cited
+        Microsoft as pulling engineers from other projects in order to concentrate efforts on fixing Windows 11.‡ Should this prove to be true,
+        it will hopefully bring much needed stability and usability improvements to Windows 11. Personally, I want an <u>official</u> Windows 11
+        <a href="https://tiny11.net/" target="_blank">minimal installation</a> option.
+    </p>
+    <h4>footnotes</h4>
+    <p>
+        † "Social media is an amusement park for clinical narcissists." — Moira Rose
+    </p>
+    <p>
+        ‡ Trouble reading an article from The Verge? Have you tried reader mode?
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2026/0213.html">◄-2026.02.13</a><b>...</b><a href="/blog/2025/1230.html">2025.12.30-►</a>
+</div>
+
+</div>
+</body>
+</html> 

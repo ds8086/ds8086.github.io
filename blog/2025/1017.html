@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.10.17</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="bash, kvm, linux">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#better-knight">better (k)night</a>
+    <a href="#variables" style="font-size: 12pt;">- variables</a>
+    <a href="#functions" style="font-size: 12pt;">- functions</a>
+    <a href="#demo">demo</a>
+    <a href="#shutoff" style="font-size: 12pt;">- shutoff</a>
+    <a href="#running" style="font-size: 12pt;">- running</a>
+    <a href="#kaizen">kaizen</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.10.17</h1>
+    <h2 id="better-knight">better (k)night</h2>
+    <p>
+        If you read my <a href="/blog/2025/1003.html" target="_blank">post from a few weeks ago</a>, I had thrown together a really rough bash script for backing up <s>VMs</s>
+        domains (I'm going to start using the correct vernacular) on my newly christened KVM home lab box. I mentioned that the script would be improved as a <i>phase two</i>
+        effort which I'd cover in a future post...
+    </p>
+    <p>
+        ...The future is now! I just pushed <a href="https://github.com/ds8086/Bash/blob/main/kvm/backup-domain.sh" target="_blank">the updated script</a> up to GitHub and
+        figured a quick breakdown of script logic is in order.
+    </p>
+    <h3 id="variables">variables</h3>
+    <p>
+        The domain to be backed up is specified at execution by the first (only) parameter accepted by the script. The root folder for all domain backups lives
+        at <b>/mnt/backup</b>, this is the Western Digital spinning drive in the KVM host which <i>technically</i> makes my home lab hyper-converged. The <b>folder</b>
+        variable just corresponds to the domain name while <b>dstamp</b> is the date stamp formatted as yyyyMMdd-HHmmss. All variable names are six characters in length...
+    </p>
+    <p>
+        ...So that the <b>=</b> lines up... I cannot <i>make</i> you appreciate that, you either do or do not.
+    </p>
+    <pre>
+        <code>
+domain=$1
+backup=/mnt/backup
+folder=${backup}/${domain}
+dstamp=${folder}/$(date +%Y%m%d-%H%M%S)
+        </code>
+    </pre>
+    <h3 id="functions">functions</h3>
+    <h4 id="dom_folder()">dom_folder()</h4>
+    <p>
+        Very little explanation needed here; create directories for the domain and the date stamped backup if they do not yet exist.
+    </p>
+    <pre>
+        <code>
+dom_folder() {
+    if [ ! -d "$folder" ]; then
+        mkdir -v ${folder}
+    fi
+
+    if [ ! -d "$dstamp" ]; then
+        mkdir -v ${dstamp}
+    fi
+}
+        </code>
+    </pre>
+    <h4 id="shutoff_bu()">shutoff_bu()</h4>
+    <p>
+        The process to backup a powered down domain is largely unchanged from the first version of the script. The XML definition for the domain is dumped, the file is then
+        parsed for disk file locations using a <b>sed</b> script file unique to my KVM box. Once the disk file locations are determined, the disk files are copied to the
+        date stamped backup folder for the domain.
+    </p>
+    <pre>
+        <code>
+shutoff_bu() {
+    echo "${domain} is powered off"
+
+    # dump domain definition
+    virsh dumpxml ${domain} > "${dstamp}/${domain}.xml"
+
+    # determine and copy domain disks
+    disks=$(egrep "*\.qcow2" "${dstamp}/${domain}.xml" | sed -rf ./backup-domain.sed)
+    for d in ${disks}
+    do
+        cp -v $d "${dstamp}"
+    done
+}
+        </code>
+    </pre>
+    <h4 id="running_bu()">running_bu()</h4>
+    <p>
+        This is where the script is far improved over the original. Rather than powering down a running domain, it is backed up live. To start, the domain XML definition
+        is dumped, just as with a powered down domain. The <b>virsh-backupbegin</b> command starts a backup of disk files associated with the domain. For whatever reason
+        this command <u>only</u> works for a running domain. ¯\_(ツ)_/¯ The script waits for the backup to finish and verifies completion.
+    </p>
+    <pre>
+        <code>
+running_bu() {
+    echo "${domain} is powered on"
+
+    # dump domain definition
+    virsh dumpxml ${domain} > "${dstamp}/${domain}.xml"
+
+    # backup
+    virsh backup-begin ${domain}
+
+    # wait for backup
+    job=$(virsh domjobinfo ${domain})
+    while ( echo $job | egrep "Job type: Unbounded *" > /dev/null )
+    do
+        sleep 10s
+        job=$(virsh domjobinfo ${domain})
+    done
+    ...
+        </code>
+    </pre>
+    <p>
+        With the backup complete, the XML definition file is parsed for disk for disk file locations using the same <b>sed</b> script as the powered down domain backup
+        process. Once the disk file locations are determined, the disk files created by <b>virsh-backupbegin</b> are moved to the date stamped backup folder for the domain,
+        these disk files are identified by an epoch timestamp. Once the disk files created by the backup have been moved, the appended epoch timestamp is removed from the
+        file name.
+    </p>
+    <pre>
+        <code>
+    ...
+    # confirm backup completed
+    job=$(virsh domjobinfo ${domain} --completed)
+    if ( echo $job | egrep "Job type: Completed *" > /dev/null ) then
+
+        # determine and move domain disks
+        disks=$(egrep "*\.qcow2" "${dstamp}/${domain}.xml" | sed -rf ./backup-domain.sed)
+        for d in ${disks}
+        do
+            mv -v $d.* $dstamp
+        done
+
+        # rename moved disks dropping the appended epoch timestamp
+        moved=$(ls ${dstamp}/*.qcow2.*)
+        for m in ${moved}
+        do
+            mv $m $(echo $m | cut -d \. -f1).$(echo $m | cut -d \. -f2)
+        done
+    fi
+}
+        </code>
+    </pre>
+    <h4 id="main">main</h4>
+    <p>
+        The "main" section of the script exports lists of running and shutoff domains and uses the lists to ensure that the specified domain is valid and then determine
+        and then invoke the appropriate backup function based upon the domain power state.
+    </p>
+    <pre>
+        <code>
+# determine domains' power states
+virsh list --state-shutoff --name | grep -v -e '^$' > /tmp/off.txt
+virsh list --state-running --name | grep -v -e '^$' > /tmp/on.txt
+
+# backup based on domain power state
+if ( grep ${domain} /tmp/off.txt > /dev/null ) then
+    dom_folder
+    shutoff_bu
+elif ( grep ${domain} /tmp/on.txt > /dev/null ) then
+    dom_folder
+    running_bu
+else
+    echo "${domain} is not a valid domain"
+    exit
+fi
+        </code>
+    </pre>
+    <p>
+        <i>"Is it a coincidence that each function name is ten characters long?"</i>
+        <br>
+        ...No.
+    </p>
+</section>
+
+<section>
+    <h2 id="demo">demo</h2>
+    <p>
+        How about a quick demo to show the payoff for this effort?
+    </p>
+    <h3 id="shutoff">shutoff</h3>
+    <p>
+        Starting with the easy one; a powered off domain. I selected the "template" domain I had created for Almalinux for this demo.
+    </p>
+    <a href="/assets/images/2025/1017/01.png"><img src="/assets/images/2025/1017/01.png"></a>
+    <h3 id="running">running</h3>
+    <p>
+        Now the more useful demo; a running domain. I created this domain named <b>snapdemo</b> which for the sake of added complexity and testing script logic,
+        is configured with two disk files, one is defined as a file on the KVM host while the other is defined via a storage pool.
+    </p>
+    <a href="/assets/images/2025/1017/02.png"><img src="/assets/images/2025/1017/02.png"></a>
+    <p>
+        The backup script is executed just as with a powered down domain.
+    </p>
+    <a href="/assets/images/2025/1017/03.png"><img src="/assets/images/2025/1017/03.png"></a>
+</section>
+
+<section>
+    <h2 id="kaizen">kaizen</h2>
+    <p>
+        <a href="https://en.wikipedia.org/wiki/Kaizen" target="_blank">Kaizen</a> (Japanese: 改善; "improvement"). Nearly everything can be improved, including
+        (especially?) this bash script, but how?
+    </p>
+    <ul>
+        <li>Error handling for failed backup jobs (top priority).</li>
+        <li>Logic for backup jobs which take far too long.</li>
+        <li>Logging for all script executions, alerting for failures.</li>
+        <li>Options to purge backups older than <b>X</b> jobs or <b>Y</b> date.</li>
+    </ul>
+    <p>
+        <i>"What about compressing the date stamped directory once the backup completes?"</i>
+        <br>
+        Tried. It took about 15 minutes to compress 3.2G worth of data and only saved about 20%. Not worth it for the home lab.
+    </p>
+    <p>
+        I doubt future iterations of the script will get their own post, I will just come back here to add any noteworthy updates.
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2025/1020.html">◄-2025.10.20</a><b>...</b><a href="/blog/2025/1009.html">2025.10.09-►</a>
+</div>
+
+</div>
+</body>
+</html>

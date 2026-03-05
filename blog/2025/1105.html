@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.11.05</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="dnf, linux, squid">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#squid">squid</a>
+    <a href="#cert" style="font-size: 12pt;">- cert</a>
+    <a href="#config" style="font-size: 12pt;">- config</a>
+    <a href="#testing" style="font-size: 12pt;">- testing</a>
+    <a href="#nginx">nginx</a>
+    <a href="#clients">clients</a>
+    <a href="#dnf" style="font-size: 12pt;">- dnf</a>
+    <a href="#repos" style="font-size: 12pt;">- repos</a>
+    <a href="#final-thoughts">final thoughts</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.11.05</h1>
+    <h2 id="squid">squid</h2>
+    <p>
+        With a growing AlmaLinux presence in my home lab, it is time to improve my package updating process. I do <u>not</u> have an unlimited data plan from my ISP
+        and even if I did, it would be irresponsible as an IT professional to download the same package multiple times. There are basically two solutions for this issue;
+        create a local mirror or use http caching via a proxy. I <i>briefly</i> tinkered with a local mirror, I made a few posts covering the implementation which I have
+        since removed. Why? The combination of <b>reposync</b> for the BaseOS repo and <b>repotrack</b> for <u>select</u> packages from AppStream was cumbersome, did
+        not scale, and cleaning up superseded packages proved to be a pain. If you are <i>that</i> curious about setting up a local mirror, dig through git commits for
+        this site for the end of October 2025.
+    </p>
+    <p>
+        As you will have guessed, <i>this</i> post will outline using a squid proxy to cache http data created by dnf during the package update process. Open your
+        textbooks to chapter on <a href="https://www.squid-cache.org/" target="_blank">squid</a> and follow along if you like. I am using an AlmaLinux minimal
+        virtual machine with 2 vCPUs, 6GB of RAM, and a 16G virtual drive for this effort, any RHEL adjacent distro should also work. Debian folks... good luck?
+    </p>
+    <pre>
+        <code>
+dnf install squid -y
+        </code>
+    </pre>
+    <h3 id="cert">cert</h3>
+    <p>
+        Because squid could <i>potentially</i> cache data requested over https, I will be implementing ssl bump which allows squid to terminate, decrypt,
+        and then re-encrypt https connections. For this to function, squid will act as a certificate authority, issuing temporary certificates to clients as needed.
+        To start, <b>/etc/ssl/openssl.cnf</b> needs to be modified by uncommenting <b>keyUsage = cRLSign, keyCertSign</b> under the <b>[ v3_ca ]</b> directive.
+    </p>
+    <a href="/assets/images/2025/1105/01.png"><img src="/assets/images/2025/1105/01.png"></a>
+    <p>
+        If I have the opportunity to provision a certificate which may outlive my career in IT, I am taking it. The code below creates the directory where squid
+        shall store certificates, then creates a self-signed CA certificate which squid will use for <i>issuing</i> certificates. Complete the CSR as you see fit.
+    </p>
+    <pre>
+        <code>
+mkdir /etc/squid/ssl_cert
+openssl req -new -newkey rsa:2048 -sha256 -days 3650 -nodes -x509 -extensions v3_ca -keyout /etc/squid/ssl_cert/squid.pem -out /etc/squid/ssl_cert/squid.pem
+        </code>
+    </pre>
+    <a href="/assets/images/2025/1105/02.png"><img src="/assets/images/2025/1105/02.png"></a>
+    <p>
+        The code below creates a certificate using the previously created x509 file, copies it to the CA trust store, then updates trusted CAs. The <b>squid.crt</b>
+        certificate will also need to be installed on all proxy clients using this method (lines 2 and 3). Might as well do that now.
+    </p>
+    <pre>
+        <code>
+openssl x509 -in /etc/squid/ssl_cert/squid.pem -out /etc/squid/ssl_cert/squid.crt
+cp /etc/squid/ssl_cert/squid.crt /usr/share/pki/ca-trust-source/anchors
+update-ca-trust
+        </code>
+    </pre>
+    <p>
+        Finally, the code below updates ownership and permissions for the <b>ssl_cert</b> directory and files.
+    </p>
+    <pre>
+        <code>
+chown squid:squid -R /etc/squid/ssl_cert
+chmod 700 /etc/squid/ssl_cert
+        </code>
+    </pre>
+    <h3 id="config">config</h3>
+    <p>
+        On to the squid config; <b>/etc/squid/squid.conf</b>. For this post I am only listing modifications to the default config. The ACL rule below is added
+        to the end of the <i>existing</i> ACL rule list.
+    </p>
+    <pre>
+        <code>
+acl step1 at_step SslBump1
+        </code>
+    </pre>
+    <p>
+        The line below is commented out.
+    </p>
+    <pre>
+        <code>
+# http_access deny CONNECT !SSL_ports
+        </code>
+    </pre>
+    <p>
+        The default <b>http_port 3128</b> line is replaced with the block below.
+    </p>
+    <pre>
+        <code>
+http_port 3128 ssl-bump \
+	cert=/etc/squid/ssl_cert/squid.pem \
+	generate-host-certificates=on \
+	dynamic_cert_mem_cache_size=4MB
+        </code>
+    </pre>
+    <p>
+        The <b>cache_dir</b> line is uncommented and replaced with the specified values. This will give squid 10GB of disk space to cache http/s data.
+    </p>
+    <pre>
+        <code>
+cache_dir ufs /var/spool/squid 10240 16 256
+        </code>
+    </pre>
+    <p>
+        Finally, the block below is added right below the <b>cache_dir</b> line. This tells squid to reserve 2GB of RAM for storing and serving cached
+        web data and sets the maximum size of a single cached object to 4GB, which should be more than enough for my use case.
+    </p>
+    <pre>
+        <code>
+cache_mem 2 GB
+maximum_object_size 4096 MB
+
+sslcrtd_program /usr/lib64/squid/security_file_certgen -s /var/spool/squid/ssl_db -M 4MB
+ssl_bump peek step1
+ssl_bump bump all
+        </code>
+    </pre>
+    <h3 id="run">run</h3>
+    <p>
+        With squid configuration complete, the squid cache can be initialized.
+    </p>
+    <pre>
+        <code>
+squid -z
+        </code>
+    </pre>
+    <a href="/assets/images/2025/1105/03.png"><img src="/assets/images/2025/1105/03.png"></a>
+    <p>
+        The SSL database is then initialized in <b>/var/spool/squid</b> to ensure that SELinux does not cause issues.
+    </p>
+    <pre>
+        <code>
+sudo -u squid /usr/lib64/squid/security_file_certgen -c -s /var/spool/squid/ssl_db -M 4MB
+        </code>
+    </pre>
+    <a href="/assets/images/2025/1105/04.png"><img src="/assets/images/2025/1105/04.png"></a>
+    <p>
+        Time to start squid and check the status for any errors.
+    </p>
+    <pre>
+        <code>
+systemctl start squid
+systemctl status squid
+        </code>
+    </pre>
+    <a href="/assets/images/2025/1105/05.png"><img src="/assets/images/2025/1105/05.png"></a>
+    <p>
+        The status looks good, so squid can be enabled for automatic startup. The required ports are also added to the firewall config.
+    </p>
+    <pre>
+        <code>
+systemctl enable squid
+firewall-cmd --zone=public --add-port=3128/tcp --permanent
+firewall-cmd --reload
+        </code>
+    </pre>
+    <h3 id="testing">testing</h3>
+    <p>
+        This is a good point to test squid's ability to actually proxy web requests from clients and cache web responses. First a <b>curl</b> from my KVM host...
+    </p>
+    <a href="/assets/images/2025/1105/06.png"><img src="/assets/images/2025/1105/06.png"></a>
+    <p>
+        ...Followed by a <b>curl</b> from my docker host.
+    </p>
+    <a href="/assets/images/2025/1105/07.png"><img src="/assets/images/2025/1105/07.png"></a>
+    <p>
+        Both of the <b>curl</b> requests were successful. Remember, any clients using the squid proxy for web requests need the previously created
+        CA certificate from squid installed. If you are following along and have received certificate errors from <b>curl</b>, go back to the
+        <a href="#cert">cert</a> section. Give it another read... not a skim. What do those two web requests look like in the squid access log?
+    </p>
+    <pre>
+        <code>
+cat /var/log/squid/access.log | grep ds
+        </code>
+    </pre>
+    <a href="/assets/images/2025/1105/08.png"><img src="/assets/images/2025/1105/08.png"></a>
+    <p>
+        We can safely say that squid successfully proxied the https request from both clients and that the <i>second</i> request was served from in-memory cache.
+    </p>
+</section>
+
+<section>
+    <h2 id="nginx">nginx</h2>
+    <p>
+        With squid fully functional, nginx can be installed. Stick with me, all will be made clear....
+    </p>
+    <pre>
+        <code>
+dnf install nginx -y
+mkdir -p /var/www/mirrorlist/9
+firewall-cmd --zone=public --add-service=http --permanent
+firewall-cmd --reload
+        </code>
+    </pre>
+    <p>
+        Create <b>/etc/nginx/conf.d/nginx.conf</b> with the content below.
+    </p>
+    <pre>
+        <code>
+include /etc/nginx/conf.d/*.conf;
+
+server {
+	# listen on port 80
+	listen 80;
+
+	# server name
+	server_name squid.ds.lan;
+
+	# default location
+	location / {
+	
+		# root directory
+		root /var/www/html/;
+		autoindex on;
+	}
+	
+	# default file type
+	default_type text/html;
+}
+        </code>
+    </pre>
+    <p>
+        You may have already figured out that nginx will be used to host a locally maintained mirror list. This will ensure that only efficient mirrors are used and
+        that they are tried in an explicit order to facilitate predictable caching of web requests and packages. The default mirror list for the AlmaLinux 9 AppStream
+        repo is available <a href="https://mirrors.almalinux.org/mirrorlist/9/appstream" target="_blank">here</a> and when accessed, <i>should</i> show you the ten
+        closest repository mirrors based upon your egress IP address<b>*</b>. You can substitute <b>baseos</b> and <b>extras</b> for <b>appstream</b> in the URL to
+        find the closest mirrors for those repositories as well. I accessed these URLs and picked out three different mirrors with the following criteria in mind.
+    </p>
+    <ul>
+        <li>Mirrors will exist in unique US states.</li>
+        <li>Mirrors will be operated by unique entities.</li>
+    </ul>
+    <p>
+        With three different mirrors selected, their corresponding URLs are placed within the three files created below.
+    </p>
+    <pre>
+        <code>
+/var/www/mirrorlist/9/appstream
+/var/www/mirrorlist/9/baseos
+/var/www/mirrorlist/9/extras
+        </code>
+    </pre>
+    <p>
+        With that, nginx can be started and enabled.
+    </p>
+    <pre>
+        <code>
+systemctl enable nginx --now
+        </code>
+    </pre>
+    <p>
+        With nginx running, the local mirror list website can be tested. I cannot figure out <i>why</i> the mirrors are all displayed on one line. I tried
+        changing the file encoding, as well as the carriage return characters. It matters not as dnf clients make use of the file in this state.
+    </p>
+    <a href="/assets/images/2025/1105/09.png"><img src="/assets/images/2025/1105/09.png"></a>
+    <p>
+        <b>*</b> If you are using a VPN client for egress internet traffic, take that into consideration when viewing your list of closest mirrors. You might also
+        consider how "private" your VPN connection really is. Do you manage the VPN connection or does a service provider? How much do you <i>pay</i> that service
+        provider? How much do you <u>trust</u> that service provider? Have you considered using a VPS?
+    </p>
+</section>
+
+<section>
+    <h2 id="clients">clients</h2>
+    <p>
+        With both squid and nginx working, it is time to configure clients to <i>use</i> the proxy and local mirror list. 
+    </p>
+    <h3 id="dnf">dnf</h3>
+    <p>
+        Below is my dnf configuration file (<b>/etc/dnf/dnf.conf</b>). The most important thing is that <b>fastestmirror</b> is <u>NOT</u> used. "Fastest" in
+        this context is open to debate, basically dnf makes a quick TCP connection to mirrors and selects one with a low latency. Low latency does not always mean fast
+        <i>download</i>. I found an <a href="https://blog.thelifeofkenneth.com/2024/10/fastestmirror-less-awful.html" target="_blank">interesting anecdote</a>
+        where a "fast" mirror became the mirror of choice for over a million CentOS instances running in AWS Virginia. Fun.
+    </p>
+    <pre>
+        <code>
+[main]
+proxy=http://squid.ds.lan:3128
+max_parallel_downloads=3
+gpgcheck=1
+installonly_limit=3
+clean_requirements_on_remove=True
+best=True
+skip_if_unavailable=True
+        </code>
+    </pre>
+    <h3 id="repos">repos</h3>
+    <p>
+        After configuring dnf, the AlmaLinux repository configurations must be updated to make use of the locally hosted mirror. The three files listed below
+        each ship with a <b>mirrorlist</b> setting, as previously mentioned. The setting value can now be updated replacing the default FQDN
+        <b>mirrors.almalinux.org</b> with that of the squid server, in my case <b>squid.ds.lan</b>.
+    </p>
+    <pre>
+        <code>
+/etc/yum.repos.d/almalinux-appstream.repo
+/etc/yum.repos.d/almalinux-baseos.repo
+/etc/yum.repos.d/almalinux-extras.repo
+        </code>
+    </pre>
+    <p>
+        With the repository configurations updated, it is time to test. The code below is ran on each client.
+    </p>
+    <pre>
+        <code>
+dnf clean all
+dnf update
+        </code>
+    </pre>
+    <p>
+        The first client to perform <b>dnf update</b> will have http requests served by the remote mirror and cached by squid. <i>Subsequent</i> clients which
+        perform <b>dnf update</b> will have http requests served by squid cache. This was immediately evident from just the download speed of repo data for
+        each client following the first.
+    </p>
+    <a href="/assets/images/2025/1105/10.png"><img src="/assets/images/2025/1105/10.png"></a>
+    <p>
+        Viewing the access log for squid confirms responses were served from cache using both data cached in memory and on disk.
+    </p>
+    <a href="/assets/images/2025/1105/11.png"><img src="/assets/images/2025/1105/11.png"></a>
+</section>
+
+<section>
+    <h2 id="final-thoughts">final thoughts</h2>
+    <p>
+        There will definitely a future post revisiting my squid proxy implementation. Currently, my only measure for bandwidth savings is, 
+        <i>"Look how fast it is!"</i>. I plan on running at least a few patch cycles through the squid proxy, then I will analyze bandwidth savings and tune
+        the configuration if needed. Right now, I need to boot up my AlmaLinux "golden image" to get the new CA certificate installed, along with the
+        dnf and repo mirrorlist configuration updates.
+    </p>
+    <p>
+        Until next time.
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2025/1117.html">◄-2025.11.17</a><b>...</b><a href="/blog/2025/1020.html">2025.10.20-►</a>
+</div>
+
+</div>
+</body>
+</html>

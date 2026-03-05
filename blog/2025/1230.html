@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.12.30</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="dns, linux, pi-hole">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#holiday-pi">holiday pi</a>
+    <a href="#install">install</a>
+    <a href="#docker" style="font-size: 12pt;">- docker</a>
+    <a href="#vm" style="font-size: 12pt;">- vm</a>
+    <a href="#config">config</a>
+    <a href="#lists" style="font-size: 12pt;">- lists</a>
+    <a href="#mikrotik" style="font-size: 12pt;">- mikrotik</a>
+    <a href="#final-thoughts">final thoughts</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.12.30</h1>
+    <h2 id="holiday-pi">holiday pi</h2>
+    <p>
+        Mozilla recently named Anthony Enzor-DeMeo as CEO. In his
+        <a href="https://www.theverge.com/tech/845216/mozilla-ceo-anthony-enzor-demeo" target=" _blank">first interview</a> since the promotion, 
+        he described future Firefox as being more AI-integrated, but with the option to disable such features... He also hinted at the
+        possibility of disallowing ad blockers in the same way that Google no longer allows them for Chrome.
+    </p>
+    <p>
+        <i>"...[he] estimates that’d bring in another $150 million [in revenue], but he doesn’t want to do that. It feels off-mission."</i>
+    </p>
+    <p>
+        20+ years ago, Firefox portable empowered fledgling nerds of my high school. It allowed persistence in a world ruled
+        by Deep Freeze and more importantly, it provided the means to bypass IE proxy server settings. I have been ride-or-die Firefox
+        since high school. I am uneasy about the future of Firefox. I am also a well-equipped Systems Engineer with a home lab. Enter
+        <a href="https://pi-hole.net/" target="_blank">Pi-hole</a>. In a possible future where ad blockers are banned for Firefox, I will block
+        ads at the network level.
+    </p>
+</section>
+
+<section>
+    <h2 id="install">install</h2>
+    <h3 id="docker">docker</h3>
+    <p>
+        If you have a <a href="https://github.com/pi-hole/docker-pi-hole/" target="_blank">docker</a> host, a Pi-hole container is quick
+        to deploy and easy to manage. Below is a stripped down docker compose YML file.
+    </p>
+    <pre>
+        <code>
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8080:80/tcp"
+    environment:
+      TZ: 'America/Los_Angeles'
+      FTLCONF_webserver_api_password: 'ripUblock0rgin'
+      FTLCONF_dns_listeningMode: 'ALL'
+    volumes:
+      - './etc-pihole:/etc/pihole'
+    restart: unless-stopped
+        </code>
+    </pre>
+    <h3 id="vm">vm</h3>
+    <p>
+        No docker? No problem! Slam four lines into a root shell on a RHEL based linux VM and go though the TUI setup.
+    </p>
+    <pre>
+        <code>
+firewall-cmd --permanent --add-service=http --add-service=https --add-service=dns
+firewall-cmd --reload
+export PIHOLE_SELINUX=true
+curl -sSL https://install.pi-hole.net | bash
+        </code>
+    </pre>
+</section>
+
+<section>
+    <h2 id="config">config</h2>
+    <h3 id="lists">lists</h3>
+    <p>
+        With Pi-hole up and running, the block lists below make great additions to the out-of-box configuration.
+    </p>
+    <pre>
+        <code>
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/multi.txt
+https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/tif.txt
+        </code>
+    </pre>
+    <p>
+        Once added, update your gravity list following the provided onscreen <b>Hint</b>.
+    </p>
+    <a href="/assets/images/2025/1230/01.png"><img src="/assets/images/2025/1230/01.png"></a>
+    <h3 id="mikrotik">mikrotik</h3>
+    <p>
+        Time to send DNS traffic through Pi-hole. You basically have two options here:
+    </p>
+    <ul>
+        <li>Use Pi-hole as the DNS server option for DHCP clients.</li>
+        <li>Use Pi-hole as the upstream DNS server for your router.</li>
+    </ul>
+    <p>
+        Both options have pros and cons. If you point clients directly to Pi-hole, you gain granular insight into traffic. This allows for
+        easier troubleshooting on a client-by-client basis but makes Pi-hole a single point of failure. On the other hand, if you use Pi-hole as
+        the upstream DNS server for your router, you <i>lose</i> client level granularity but gain the advantage of quick DNS failover should
+        Pi-hole be unavailable. I opt for resiliancy, provided by the latter option.
+    </p>
+    <p>
+        The mikrotik script below creates a netwatch config which will query Pi-hole (<b>10.10.0.103</b>) every 1 minute for DNS A record
+        <b>www.google.com</b>. While netwatch is 'up' the mikrotik upstream DNS server is Pi-hole, conversely if Pi-hole does not provide a
+        DNS response, the mikrotik uses Cloudflare for upstream DNS.
+    </p>
+    <pre>
+        <code>
+/tool netwatch
+add disabled=no dns-server=10.10.0.103 down-script="ip dns set servers=1.1.1.2,1.0.0.2\r\
+    \nip dns cache flush" host=www.google.com http-codes="" interval=60s record-type=A test-script="" type=dns up-script="ip dns set servers=10.10.0.103\r\
+    \nip dns cache flush"
+        </code>
+    </pre>
+    <p>
+        Unplugging the virtual NIC used by Pi-hole causes netwatch to report 'down', with upstream DNS servers changed to Cloudflare as expected.
+    </p>
+    <a href="/assets/images/2025/1230/02.png"><img src="/assets/images/2025/1230/02.png"></a>
+    <p>
+        Reconnecting the virtual NIC returns netwatch status to 'up' and the upstream DNS server back to Pi-hole.
+    </p>
+    <a href="/assets/images/2025/1230/03.png"><img src="/assets/images/2025/1230/03.png"></a>
+</section>
+
+<section>
+    <h2 id="final-thoughts">final thoughts</h2>
+    <p>
+        Pi-hole has been handling production DNS traffic for about 36 hours and only one exception has been required thus far. I had expected complaints
+        from social media scrolling cohabitants, but that has yet to be the case. Loading up websites <i>without</i> uBlock Origin reveals that Pi-hole
+        could stand to be more aggressive. How <i>exactly</i> is a car insurance ad relevant to a recipe website anyway? Perhaps I will post a Pi-hole
+        part II once I have tuned it further.
+    </p>
+    <p>
+        I have read several articles recently which have predicted 2026 will start the third
+        <a href="https://en.wikipedia.org/wiki/Browser_wars" target="_blank">browser war</a> with AI-integration being focus this time around.
+        I have walked through the valley of the shadow of Netscape. I celebrated when Firefox 3.5 briefly overtook IE in tracked web browser stats.
+        I have heard countless whispers of <i>Opera</i> from contrarian turbo nerds for over a decade. Each browser vying for marginally faster page
+        load times or an increased security posture...
+    </p>
+    <p>
+        ...There will be no third browser war. We no longer seek the <i>best</i> browser, just the most tolerable.
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2026/0207.html">◄-2026.02.07</a><b>...</b><a href="/blog/2025/1117.html">2025.11.17-►</a>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.07.14</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="exchange, windows">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#exchange-se">exchange se</a>
+    <a href="#plan" style="font-size: 12pt;">- plan</a>
+    <a href="#pre-maintenance">maintenance</a>
+    <a href="#start" style="font-size: 12pt;">- start</a>
+    <a href="#pre-verify" style="font-size: 12pt;">- verify</a>
+    <a href="#upgrade">upgrade</a>
+    <a href="#post-maintenance">maintenance</a>
+    <a href="#stop" style="font-size: 12pt;">- stop</a>
+    <a href="#post-verify" style="font-size: 12pt;">- verify</a>
+    <a href="#landmines">landmines</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.07.14</h1>
+    <h2 id="exchange-se">exchange se</h2>
+    <p>
+        As mentioned in my <a href="/blog/2025/0714.html">previous post</a>, as of October 2025, Exchange SE will be the only supported version of on-premises Exchange. This
+        is somewhat reminiscent of claims that <i>"Windows 10 will be the 'last' incremented version of Windows."</i>. What happened there? I digress. This post will run
+        through the process of upgrading my previously created Exchange 2019 DAG to Exchange SE. As a quick recap, Exchange 2019 CU14 is currently installed on two servers
+        (<b>ex01</b> and <b>ex02</b>) and using these two servers a DAG (<b>dag01</b>) was created. Each server is currently active for the mailbox database which was created
+        during the initial installation and also has a passive copy of the <i>other</i> database in the environment. The code below should clarify what is honestly hard to
+        otherwise describe.
+    </p>
+    <pre>
+        <code>
+Get-MailboxDatabase | Select Name,Server,ReplicationType,ActivationPreference
+'ex01','ex02' | % { Get-MailboxDatabaseCopyStatus -Server $_ } | Sort Name | Select Name,Status,*Length
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0714/01.png"><img src="/assets/images/2025/0714/01.png"></a>
+    <h3 id="plan">plan</h3>
+    <p>
+        Right, so what's the plan? Following the official
+        <a href="https://learn.microsoft.com/en-us/exchange/high-availability/manage-ha/manage-dags#performing-maintenance-on-dag-members" target="blank">Microsoft Docs</a>
+        outlining maintenance on DAG members...
+    </p>
+    <ul>
+        <li>Place <b>ex01</b> in maintenance mode</li>
+        <li>Upgrade Exchange from 2019 to SE on <b>ex01</b></li>
+        <li>Remove <b>ex01</b> from maintenance mode</li>
+        <li>Rinse and repeat the process above on <b>ex02</b></li>
+    </ul>
+</section>
+
+<section>
+    <h2 id="pre-maintenance">maintenance</h2>
+    <p>
+        <b style="color: yellow;">WARNING:</b> All commands and cmdlets are executed directly from the Exchange Management Shell (EMS) directly on the server being upgraded.
+    </p>
+    <h3 id="start">start</h3>
+    <p>
+        Empty and then initiate the draining of transport queues.
+    </p>
+    <pre>
+        <code>
+Set-ServerComponentState $env:ComputerName -Component HubTransport -State Draining -Requester Maintenance
+Restart-Service MSExchangeTransport
+        </code>
+    </pre>
+    <p>
+        Start DAG server maintenance via the Microsoft provided script.
+    </p>
+    <pre>
+        <code>
+& $exscripts\StartDagServerMaintenance.ps1 -ServerName $env:ComputerName -MoveComment Maintenance -PauseClusterNode
+        </code>
+    </pre>
+    <p>
+        Redirect messages pending delivery to the <i>other</i> Exchange server in the environment.
+    </p>
+    <pre>
+        <code>
+Redirect-Message -Server $env:ComputerName -Target "$((Get-ExchangeServer | ? {$_.Name -ne $env:ComputerName}).Name).$($env:UserDnsDomain)"
+        </code>
+    </pre>
+    <p>
+        Place the server into maintenance mode.
+    </p>
+    <pre>
+        <code>
+Set-ServerComponentState $env:ComputerName -Component ServerWideOffline -State Inactive -Requester Maintenance
+        </code>
+    </pre>
+    <h3 id="pre-verify">verify</h3>
+    <p>
+        Confirm that only <b>monitoring</b> and <b>RecoveryActionsEnabled</b> are in an active state.
+    </p>
+    <pre>
+        <code>
+Get-ServerComponentState $env:ComputerName | Format-Table Component,State -Autosize
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0714/02.png"><img src="/assets/images/2025/0714/02.png"></a>
+    <p>
+        Verify the server is not hosting any active database copies.
+    </p>
+    <pre>
+        <code>
+Get-MailboxServer $env:ComputerName | Format-List DatabaseCopyAutoActivationPolicy
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0714/03.png"><img src="/assets/images/2025/0714/03.png"></a>
+    <p>
+        Ensure the cluster node is paused.
+    </p>
+    <pre>
+        <code>
+Get-ClusterNode $env:ComputerName | Format-List
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0714/04.png"><img src="/assets/images/2025/0714/04.png"></a>
+    <p>
+        Finally, verify all transport queues have been emptied. Anything with a <b>count</b> value should be <b>0</b>.
+    </p>
+    <pre>
+        <code>
+Get-Queue | Format-List *
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0714/05.png"><img src="/assets/images/2025/0714/05.png"></a>
+</section>
+
+<section>
+    <h2 id="upgrade">upgrade</h2>
+    <p>
+        Upgrading Exchange is considerably less work than <i>preparing</i> to upgrade Exchange. Assuming the Exchange SE iso is mounted a <b>D:\</b> run the code below.
+    </p>
+    <pre>
+        <code>
+$sw = New-Object -TypeName System.Diagnostics.Stopwatch
+$sw.Start()
+
+# Exchange upgrade
+D:\Setup.exe /IAcceptExchangeServerLicenseTerms_DiagnosticDataOff /Mode:Upgrade /DomainController:dc01.lab.local
+
+# Upgrade in under an hour?
+$sw.Stop()
+$sw
+        </code>
+    </pre>
+    <p>
+        About an hour later the upgrade is complete.
+    </p>
+    <a href="/assets/images/2025/0714/06.png"><img src="/assets/images/2025/0714/06.png"></a>
+</section>
+
+<section>
+    <h2 id="post-maintenance">maintenance</h2>
+    <h3 id="stop">stop</h3>
+    <p>
+        Remove the server from maintenance mode.
+    </p>
+    <pre>
+        <code>
+Set-ServerComponentState $env:ComputerName -Component ServerWideOffline -State Active -Requester Maintenance
+        </code>
+    </pre>
+    <p>
+        Stop DAG maintenance via the Microsoft provided script.
+    </p>
+    <pre>
+        <code>
+& $exscripts\StopDagServerMaintenance.ps1 -ServerName $env:ComputerName
+        </code>
+    </pre>
+    <p>
+        Enable transport queues and resume transport activity.
+    </p>
+    <pre>
+        <code>
+Set-ServerComponentState $env:ComputerName -Component HubTransport -State Active -Requester Maintenance
+Restart-Service MSExchangeTransport
+        </code>
+    </pre>
+    <h3 id="post-verify">verify</h3>
+    <p>
+        Verify the server is no longer in maintenance mode.
+    </p>
+    <pre>
+        <code>
+Get-ServerComponentState $env:ComputerName | Format-Table Component,State -Autosize
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0714/07.png"><img src="/assets/images/2025/0714/07.png"></a>
+    <p>
+        Redistribute active database copies among DAG members according to activation preference.
+    </p>
+    <pre>
+        <code>
+& $exscripts\RedistributeActiveDatabases.ps1 -DagName dag01 -BalanceDbsByActivationPreference
+        </code>
+    </pre>
+    <a href="/assets/images/2025/0714/08.png"><img src="/assets/images/2025/0714/08.png"></a>
+    <p>
+        Send test email and use OWA to verify both the receipt of it and the functionality of CAS roles.
+    </p>
+    <pre>
+        <code>
+$Mail = @{
+    'To' = 'Administrator@lab.local'
+    'From' = 'Rick@lab.local'
+    'Subject' = 'Never...'
+    'Body' = '...Gonna give you up'
+    'SmtpServer' = 'Localhost'
+    'Port' = 25
+}
+Send-MailMessage @Mail
+        </code>
+    </pre>
+    <p>
+        I'll call that a successful upgrade.
+    </p>
+    <a href="/assets/images/2025/0714/09.png"><img src="/assets/images/2025/0714/09.png"></a>
+</section>
+
+<section>
+    <h2 id="landmines">landmines</h2>
+    <p>
+        Some potential landmines and things to keep in mind during an Exchange upgrade...
+    </p>
+    <ul>
+        <li>DAG members can be upgraded in a "rolling" fashion but do <u>not</u> run different Exchange versions among DAG members for extended periods of time.</li>
+        <li>Failed Exchange upgrades can potentially leave server components in an undesirable state. Use the code below to check and enable server components.</li>
+    </ul>
+    <pre>
+        <code>
+# Check component state
+Get-ServerComponentState $env:ComputerName | Format-Table Component,State -Autosize
+
+# Enable components
+Set-ServerComponentState $env:ComputerName -Component ServerWideOffline -State Active -Requester Functional
+Set-ServerComponentState $env:ComputerName -Component Monitoring -State Active -Requester Functional
+Set-ServerComponentState $env:ComputerName -Component RecoveryActionsEnabled -State Active -Requester Functional
+        </code>
+    </pre>
+    <ul>
+        <li>If you utilize POP3 and/or IMAP4, services must be manually started once the server components are active.</li>
+    </ul>
+    <pre>
+        <code>
+Get-Service -DisplayName *pop*,*imap* | Start-Service
+        </code>
+    </pre>
+</section>
+</div>
+
+<div class="footer">
+    <a href="/blog/2025/0804.html">◄-2025.08.04</a><b>...</b><a href="/blog/2025/0711.html">2025.07.11-►</a>
+</div>
+
+</body>
+</html>

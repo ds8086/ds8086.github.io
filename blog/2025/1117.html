@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.11.17</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="dnf, linux, squid">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#calamaris">calamaris</a>
+    <a href="#install" style="font-size: 12pt;">- install</a>
+    <a href="#reporting" style="font-size: 12pt;">- reporting</a>
+    <a href="#final-thoughts">final thoughts</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.11.17</h1>
+    <h2 id="calamaris">calamaris</h2>
+    <p>
+        In my <a href="/blog/2025/1105.html" target="_blank">last post</a>, I implemented an nginx local mirror list and squid proxy for the caching dnf packages.
+        I wrapped up that post saying that I would soon explore squid reporting to see just how much data is being saved. A few weeks have past so let's have at it,
+        this will be quick. I will use <b>calamaris</b> for reporting squid proxy stats which lives in the EPEL repository, not included with AlmaLinux by default.
+        The first step is to get that repo installed and enable the CodeReady Builder (crb) repo as suggested by the
+        <a href="https://wiki.almalinux.org/repos/Extras.html" target="_blank">AlmaLinux Wiki</a>.
+    </p>
+    <h3 id="install">install</h3>
+    <pre>
+        <code>
+dnf install epel-release -y
+dnf config-manager --set-enabled crb
+        </code>
+    </pre>
+    <p>
+        With the additional repos in place, <b>calamaris</b> can be installed...
+    </p>
+    <pre>
+        <code>
+dnf install calamaris -y
+        </code>
+    </pre>
+    <h3 id="reporting">reporting</h3>
+    <p>
+        ...Following that, the squid access logs can be piped right into <b>calamaris</b> to generate reports. 
+    </p>
+    <pre>
+        <code>
+calamaris /var/log/squid/access.log --unit M
+        </code>
+    </pre>
+    <p>
+        During the past two days, about 400MB of traffic has been proxied through squid with about 58% of it served from cache. Solid.
+    </p>
+    <a href="/assets/images/2025/1117/01.png"><img src="/assets/images/2025/1117/01.png"></a>
+    <p>
+        Let's go back further in logs and let's be <i>fancy</i> about it? The throw-away script below will copy squid access logs to your home directory,
+        decompress any zipped log files, and feed <u>all</u> log files into <b>calamaris</b>.
+    </p>
+    <pre>
+        <code>
+#!/bin/bash
+
+cp /var/log/squid/access* ~
+zip=$(find ~/access.log-*.gz)
+
+for z in $zip;
+	do gzip -d $z;
+done
+
+logs=$(find ~/access.log*)
+calamaris $logs --unit M
+        </code>
+    </pre>
+    <p>
+        Now those are numbers that mean something! Since implementation, squid has proxied over 5GB of dnf related traffic with almost 70% being cached.
+    </p>
+    <a href="/assets/images/2025/1117/02.png"><img src="/assets/images/2025/1117/02.png"></a>
+</section>
+
+<section>
+    <h2 id="final-thoughts">final thoughts</h2>
+    <p>
+        I was <i>content</i> with seeing my AlmaLinux servers install packages much faster following the initial implementation of squid. Now seeing
+        numbers, being able to quantify <i>faster</i>... I am <u>thrilled</u>. The payoff has far exceeded the effort and will only continue to do so.
+        At this point, the squid server is alone in using the EPEL and CRB repos. Eventually that will change and when it does, I will host local mirror lists
+        for those repositories as well. I may even consider just adding those repos proactively in my environment and updating the related DNF (yum) repo
+        configs while it is fresh in my mind.
+    </p>
+    <p>
+        <i>“Before my eyes was a horrible monster, worthy to figure in the legends of the marvellous."</i>
+    </p>
+    <p>
+        —Jules Verne, Twenty Thousand Leagues under the Sea
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2025/1230.html">◄-2025.12.30</a><b>...</b><a href="/blog/2025/1105.html">2025.11.05-►</a>
+</div>
+
+</div>
+</body>
+</html>

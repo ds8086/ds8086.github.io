@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2026.02.13</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="java, minecraft, windows">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#minecraft">minecraft</a>
+    <a href="#installation" style="font-size: 12pt;">- installation</a>
+    <a href="#batch" style="font-size: 12pt;">- batch</a>
+    <a href="#account" style="font-size: 12pt;">- account</a>
+    <a href="#play" style="font-size: 12pt;">- play</a>
+    <a href="#faq">faq</a>
+    <a href="#updates">updates</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2026.02.13</h1>
+    <h2 id="minecraft">minecraft</h2>
+    <p>
+        I do not recall <i>exactly</i> when I started playing Minecraft, I remember horses being big news at some point though... I rarely play
+        any more, but on occasion I wax nostalgic. Someone will spin up a Spigot or Paper server with the latest in quality of life mods and
+        we will spend a few weeks building, mining, and trying to recall potion recipes. My second-hand precision workstation has 64GB of RAM
+        and a decent nvidia Quadro GPU. Minecraft runs great...but almighty CMOS! Deliver me from the Microsoft provided Minecraft launcher.
+        The fans spin up, videos start playing, and I am bombarded with opportunities to spend money on a game I already purchased.† It is
+        sensory overload. I think about it and my interest to play Minecraft evaporates. Let's fix that.
+    </p>
+    <h3 id="installation">installation</h3>
+    <p>
+        Run the Minecraft launcher as you normally would. From the Installations tab find your desired Minecraft version and click <b>Play</b>.
+        Why version 1.7.10 for me? The last major release before Microsoft bought Mojang.
+    </p>
+    <a href="/assets/images/2026/0213/01.png"><img src="/assets/images/2026/0213/01.png"></a>
+    <p>
+        With Minecraft launched, leave the game sitting on the title screen.
+    </p>
+    <a href="/assets/images/2026/0213/02.png"><img src="/assets/images/2026/0213/02.png"></a>
+    <h3 id="batch">batch</h3>
+    <p>
+        Launch a PowerShell 7 instance and run the command below to create the batch file which will later be used to launch your selected Minecraft
+        installation.
+    </p>
+    <pre>
+        <code>
+(Get-Process javaw).CommandLine | Out-File ~\Desktop\minecraft.bat
+        </code>
+    </pre>
+    <h3 id="account">account</h3>
+    <p>
+        If Minecraft is the <u>only</u> reason your Microsoft account exists in Windows, then why not remove it? Open Windows settings
+        via <b>Win + i</b> and navigate to Accounts > Your accounts. Locate your Microsoft account and click <b>Remove</b>.‡
+    </p>
+    <a href="/assets/images/2026/0213/03.png"><img src="/assets/images/2026/0213/03.png"></a>
+    <p>
+        With your Microsoft account removed from Windows, run the Minecraft launcher again. This is to demonstrate that while you are <u>not</u> signed
+        in via a Microsoft account, you can still play Minecraft. You will be prompted for a Microsoft sign-in, just close the prompt via the <b>X</b>.
+    </p>
+    <a href="/assets/images/2026/0213/04.png"><img src="/assets/images/2026/0213/04.png"></a>
+    <p>
+        The Minecraft launcher will continue but you will quickly be met with another sign-in prompt. Close the Minecraft Launcher.
+    </p>
+    <a href="/assets/images/2026/0213/05.png"><img src="/assets/images/2026/0213/05.png"></a>
+    <h3 id="play">play</h3>
+    <p>
+        Time to play Minecraft! Double-click the previously created batch file on your desktop or run the PowerShell command below.
+    </p>
+    <pre>
+        <code>
+Start-Process -Path ~\Desktop\minecraft.bat -WindowStyle Hidden
+        </code>
+    </pre>
+    <p>
+        Look at that; Minecraft without a Microsoft sign-in and without the official launcher.
+    </p>
+    <a href="/assets/images/2026/0213/06.png"><img src="/assets/images/2026/0213/06.png"></a>
+</section>
+
+<section>
+    <h2 id="faq">faq</h2>
+    <p>
+        <b>Q:</b> Is this illegal?
+        <br>
+        <b>A:</b> I'm an engineer, not an attorney. Many third-party Minecraft launchers exist, you've just made your own.
+    </p>
+    <p>
+        <b>Q:</b> What if I want a different version?
+        <br>
+        <b>A:</b> Repeat the process, update the name of the batch file created.
+    </p>
+    <p>
+        <b>Q:</b> What if I want the <i>latest</i> version?
+        <br>
+        <b>A:</b> Use a Minecraft launcher, either official or third-party. This solution isn't really for you.
+    </p>
+    <p>
+        <b>Q:</b> Can I connect to Minecraft servers?
+        <br>
+        <b>A:</b> <s>Probably. I haven't tried yet.</s> Yup!
+    </p>
+    <p>
+        <b>Q:</b> What about Bedrock edition?
+        <br>
+        <b>A:</b> I don't know how to help you.
+    </p>
+    <p>
+        <b>Q:</b> Could I use the information in the batch file to create a "point-in-time" Minecraft bundle?
+        <br>
+        <b>A:</b> What an interesting idea...
+    </p>
+</section>
+
+<section>
+    <h2 id="updates">updates</h2>
+    <b>2026.02.19: </b>Updated FAQ for servers.
+    <h4>footnotes</h4>
+    <p>
+        † I bought Minecraft before Microsoft did. <s>Don't copy that floppy</s>. Don't pirate software.
+    </p>
+    <p>
+        ‡ Someday soon, Microsoft will require sign-in for Windows OS. Fedora anyone?
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2026/0207.html">2026.02.07-►</a>
+</div>
+
+</div>
+</body>
+</html>

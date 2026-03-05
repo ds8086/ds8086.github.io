@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>ds8086 | 2025.10.09</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="disk, linux, partition">
+    <link rel="stylesheet" href="/assets/css/blog.css">
+</head>
+
+<body>
+
+<div class="sidebar">
+    <a href="/index.html">home</a>
+    <a href="/blog/list.html">blog</a>
+    <a href="https://github.com/ds8086/" target="_blank">code</a>
+    <a href="/about.html">about</a>
+</div>
+
+<div class="pagenav">
+    <a href="#homeless">homeless</a>
+    <a href="#recon" style="font-size: 12pt;">- recon</a>
+    <a href="#copy-umount" style="font-size: 12pt;">- copy & umount</a>
+    <a href="#extend" style="font-size: 12pt;">- extend</a>
+    <a href="#fstab" style="font-size: 12pt;">- fstab</a>
+    <a href="#final-steps" style="font-size: 12pt;">- final steps</a>
+</div>
+
+<div class="content">
+<section>
+    <h1>2025.10.09</h1>
+    <h2 id="homeless">homeless</h2>
+    <p>
+        If you read my <a href="/blog/2025/1003.html" target="_blank">previous post</a>, you will recall that I am now running KVM for my home lab hypervisor. If you have
+        an eye for detail, you will have noticed that I ended up with a <b>/home</b> logical volume. You might be wondering why I decided on this LVM scheme for my new
+        KVM box. The simplest explanation is often correct; I erred. While configuring partitions my clicking about led to the volume's creation which I did not notice
+        until <i>after</i> the OS installation completed.
+    </p>
+    <p>
+        <i>"I'll deal with that later, maybe write a post about it."</i>
+    </p>
+    <p>
+        Let's begin, shall we?
+    </p>
+    <h3 id="recon">recon</h3>
+    <p>
+        <b style="color: yellow;">WARNING:</b> Run everything logged in as <b>root</b>, <u>not</u> <b>sudo su -</b>
+    </p>
+    <p>
+        First step; gather info required for operations, starting with mounted file systems.
+    </p>
+    <pre>
+        <code>
+df -h
+        </code>
+    </pre>
+    <p>
+        This operation will be considered a success if the <b>home</b> volume is no longer present and the 50G currently allocated to it has been added to the <b>root</b>
+        volume.
+    </p>
+    <a href="/assets/images/2025/1009/01.png"><img src="/assets/images/2025/1009/01.png"></a>
+    <pre>
+        <code>
+lsblk -f /dev/sda
+        </code>
+    </pre>
+    <p>
+        The <b>root</b> volume is configured with an <b>xfs</b> file system, that will be relevant later.
+    </p>
+    <a href="/assets/images/2025/1009/02.png"><img src="/assets/images/2025/1009/02.png"></a>
+    <pre>
+        <code>
+lvdisplay /dev/mapper/almalinux_kvm-home
+        </code>
+    </pre>
+    <p>
+        The volume path is <b>/dev/almalinux_kvm/home</b>, which will also be needed in a bit.
+    </p>
+    <a href="/assets/images/2025/1009/03.png"><img src="/assets/images/2025/1009/03.png"></a>
+    <h3 id="copy-umount">copy & umount</h3>
+    <p>
+        The <b>/home</b> directory is copied to <b>/tmp</b> for later restoration and <b>/home</b> is unmounted.
+    </p>
+    <pre>
+        <code>
+cp -Rvp /home /tmp
+umount /home
+        </code>
+    </pre>
+    <h3 id="remove">remove</h3>
+    <p>
+        The code below removes the logical volume and confirms that the 50G is now reported as free space.
+    </p>
+    <pre>
+        <code>
+lvremove /dev/mapper/almalinux_kvm-home -y
+vgs -v
+        </code>
+    </pre>
+    <a href="/assets/images/2025/1009/04.png"><img src="/assets/images/2025/1009/04.png"></a>
+    <h3 id="extend">extend</h3>
+    <p>
+        The code below will extend the <b>root</b> logical volume and grow the file system.
+    </p>
+    <pre>
+        <code>
+lvextend -l +100%FREE /dev/mapper/almalinux_kvm-root
+xfs_growfs /dev/mapper/almalinux_kvm-root
+        </code>
+    </pre>
+    <a href="/assets/images/2025/1009/05.png"><img src="/assets/images/2025/1009/05.png"></a>
+    <h3 id="fstab">fstab</h3>
+    <p>
+        The <b>/etc/fstab</b> config must be updated. Commenting out the <b>/home</b> mount line will suffice.
+    </p>
+    <a href="/assets/images/2025/1009/06.png"><img src="/assets/images/2025/1009/06.png"></a>
+    <h3 id="final-steps">final steps</h3>
+    <p>
+        The <b>/home</b> directory can be moved back to <b>/</b>.
+    </p>
+    <pre>
+        <code>
+mv -f /tmp/home /
+        </code>
+    </pre>
+    <p>
+        At this point it is a good idea to reboot the server to ensure everything mounts properly during boot. Following the reboot, Verify all users can log in and
+        access their home directories. If you have never preformed this operation start to finish, try it on a temporary virtual machine first, especially if the
+        production change will occur on a <i>physical</i> server as it did in my case.
+    </p>
+</section>
+
+<div class="footer">
+    <a href="/blog/2025/1017.html">◄-2025.10.17</a><b>...</b><a href="/blog/2025/1003.html">2025.10.03-►</a>
+</div>
+
+</div>
+</body>
+</html>
